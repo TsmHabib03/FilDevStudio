@@ -1,6 +1,7 @@
 <?php
 /**
- * Client Dashboard
+ * Client Dashboard - FilDevStudio Web Services Platform
+ * Enhanced UI/UX with Modern Design
  */
 $pageTitle = "Dashboard - FilDevStudio";
 require_once '../includes/header.php';
@@ -35,71 +36,115 @@ try {
     $sites = [];
     $requests = [];
 }
+
+// Count stats
+$pendingCount = count(array_filter($requests, fn($r) => $r['status'] === 'pending'));
+$inProgressCount = count(array_filter($requests, fn($r) => $r['status'] === 'in_progress'));
+$completedCount = count(array_filter($requests, fn($r) => $r['status'] === 'completed'));
 ?>
 
 <!-- Dashboard Header -->
-<section class="gradient-bg py-8">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+<section class="relative overflow-hidden bg-gradient-to-br from-primary-900 via-primary-800 to-primary-700 py-10 lg:py-14">
+    <!-- Decorative -->
+    <div class="absolute inset-0">
+        <div class="absolute top-0 right-1/4 w-96 h-96 bg-primary-400/10 rounded-full blur-3xl"></div>
+        <div class="absolute bottom-0 left-1/4 w-80 h-80 bg-accent-500/10 rounded-full blur-3xl"></div>
+    </div>
+    
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
             <div>
-                <h1 class="text-2xl md:text-3xl font-bold text-white">Welcome, <?php echo htmlspecialchars($_SESSION['user_name']); ?>!</h1>
-                <p class="text-blue-100">Manage your websites and customization requests</p>
+                <div class="flex items-center mb-3">
+                    <span class="inline-flex items-center px-3 py-1 bg-white/10 backdrop-blur-sm rounded-full text-sm text-white">
+                        <i class="fas fa-circle text-green-400 text-[8px] mr-2 animate-pulse"></i>Online Dashboard
+                    </span>
+                </div>
+                <h1 class="text-3xl md:text-4xl font-bold text-white mb-2">
+                    Welcome back, <?php echo htmlspecialchars($_SESSION['user_name']); ?>!
+                </h1>
+                <p class="text-primary-200 text-lg">Manage your websites and track your customization requests</p>
             </div>
-            <div class="flex gap-3">
-                <a href="../templates.php" class="bg-white text-primary px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition">
+            <div class="flex flex-wrap gap-3">
+                <a href="../templates.php" class="inline-flex items-center px-5 py-2.5 bg-white text-primary-600 rounded-xl font-semibold hover:bg-gray-100 transition-all duration-200 shadow-lg">
                     <i class="fas fa-plus mr-2"></i>New Website
+                </a>
+                <a href="custom-request.php" class="inline-flex items-center px-5 py-2.5 bg-white/10 backdrop-blur-sm text-white border border-white/20 rounded-xl font-semibold hover:bg-white/20 transition-all duration-200">
+                    <i class="fas fa-palette mr-2"></i>Request Design
                 </a>
             </div>
         </div>
     </div>
 </section>
 
-<section class="py-8">
+<section class="py-8 lg:py-10 bg-gray-50 min-h-[60vh]">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Stats Cards -->
-        <div class="grid md:grid-cols-4 gap-6 mb-8">
-            <div class="bg-white rounded-xl shadow p-6">
+        <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-10 -mt-14 relative z-10">
+            <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-all duration-300">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-gray-500 text-sm">Active Sites</p>
-                        <p class="text-3xl font-bold text-gray-800"><?php echo count($sites); ?></p>
+                        <p class="text-gray-500 text-sm font-medium mb-1">Active Sites</p>
+                        <p class="text-4xl font-bold text-dark"><?php echo count($sites); ?></p>
                     </div>
-                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                        <i class="fas fa-globe text-primary text-xl"></i>
+                    <div class="w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl flex items-center justify-center shadow-lg shadow-primary-500/25">
+                        <i class="fas fa-globe text-white text-xl"></i>
                     </div>
                 </div>
-            </div>
-            <div class="bg-white rounded-xl shadow p-6">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-gray-500 text-sm">Pending Requests</p>
-                        <p class="text-3xl font-bold text-gray-800"><?php echo count(array_filter($requests, fn($r) => $r['status'] === 'pending')); ?></p>
-                    </div>
-                    <div class="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
-                        <i class="fas fa-clock text-yellow-500 text-xl"></i>
-                    </div>
+                <div class="mt-4 pt-4 border-t border-gray-100">
+                    <a href="#my-websites" class="text-primary-600 text-sm font-medium hover:text-primary-700 transition-colors">
+                        View all sites <i class="fas fa-arrow-right ml-1"></i>
+                    </a>
                 </div>
             </div>
-            <div class="bg-white rounded-xl shadow p-6">
+            
+            <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-all duration-300">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-gray-500 text-sm">In Progress</p>
-                        <p class="text-3xl font-bold text-gray-800"><?php echo count(array_filter($requests, fn($r) => $r['status'] === 'in_progress')); ?></p>
+                        <p class="text-gray-500 text-sm font-medium mb-1">Pending Requests</p>
+                        <p class="text-4xl font-bold text-dark"><?php echo $pendingCount; ?></p>
                     </div>
-                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                        <i class="fas fa-spinner text-blue-500 text-xl"></i>
+                    <div class="w-14 h-14 bg-gradient-to-br from-amber-400 to-amber-500 rounded-2xl flex items-center justify-center shadow-lg shadow-amber-500/25">
+                        <i class="fas fa-clock text-white text-xl"></i>
                     </div>
                 </div>
+                <div class="mt-4 pt-4 border-t border-gray-100">
+                    <span class="text-amber-600 text-sm font-medium">
+                        <i class="fas fa-hourglass-half mr-1"></i>Awaiting review
+                    </span>
+                </div>
             </div>
-            <div class="bg-white rounded-xl shadow p-6">
+            
+            <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-all duration-300">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-gray-500 text-sm">Completed</p>
-                        <p class="text-3xl font-bold text-gray-800"><?php echo count(array_filter($requests, fn($r) => $r['status'] === 'completed')); ?></p>
+                        <p class="text-gray-500 text-sm font-medium mb-1">In Progress</p>
+                        <p class="text-4xl font-bold text-dark"><?php echo $inProgressCount; ?></p>
                     </div>
-                    <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                        <i class="fas fa-check text-green-500 text-xl"></i>
+                    <div class="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/25">
+                        <i class="fas fa-spinner text-white text-xl"></i>
                     </div>
+                </div>
+                <div class="mt-4 pt-4 border-t border-gray-100">
+                    <span class="text-blue-600 text-sm font-medium">
+                        <i class="fas fa-tools mr-1"></i>Being worked on
+                    </span>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-all duration-300">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm font-medium mb-1">Completed</p>
+                        <p class="text-4xl font-bold text-dark"><?php echo $completedCount; ?></p>
+                    </div>
+                    <div class="w-14 h-14 bg-gradient-to-br from-secondary-500 to-secondary-600 rounded-2xl flex items-center justify-center shadow-lg shadow-secondary-500/25">
+                        <i class="fas fa-check text-white text-xl"></i>
+                    </div>
+                </div>
+                <div class="mt-4 pt-4 border-t border-gray-100">
+                    <span class="text-secondary-600 text-sm font-medium">
+                        <i class="fas fa-check-circle mr-1"></i>All done!
+                    </span>
                 </div>
             </div>
         </div>
@@ -108,40 +153,67 @@ try {
             <!-- Main Content -->
             <div class="lg:col-span-2 space-y-8">
                 <!-- My Websites -->
-                <div class="bg-white rounded-xl shadow">
-                    <div class="p-6 border-b flex justify-between items-center">
-                        <h2 class="text-xl font-bold text-gray-800">My Websites</h2>
-                        <a href="../templates.php" class="text-primary hover:underline text-sm">
-                            <i class="fas fa-plus mr-1"></i>Add New
+                <div id="my-websites" class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+                    <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-gray-50 to-white">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 bg-primary-100 rounded-xl flex items-center justify-center mr-3">
+                                <i class="fas fa-globe text-primary-600"></i>
+                            </div>
+                            <h2 class="text-xl font-bold text-dark">My Websites</h2>
+                        </div>
+                        <a href="../templates.php" class="inline-flex items-center px-4 py-2 bg-primary-50 text-primary-600 rounded-lg text-sm font-medium hover:bg-primary-100 transition-colors">
+                            <i class="fas fa-plus mr-2"></i>Add New
                         </a>
                     </div>
                     <div class="p-6">
                         <?php if (empty($sites)): ?>
-                            <div class="text-center py-8">
-                                <i class="fas fa-globe text-4xl text-gray-300 mb-4"></i>
-                                <p class="text-gray-500 mb-4">You haven't created any websites yet.</p>
-                                <a href="../templates.php" class="inline-flex items-center gradient-bg text-white px-4 py-2 rounded-lg">
-                                    <i class="fas fa-plus mr-2"></i>Choose a Template
+                            <div class="text-center py-12">
+                                <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                                    <i class="fas fa-globe text-4xl text-gray-400"></i>
+                                </div>
+                                <h3 class="text-lg font-semibold text-dark mb-2">No websites yet</h3>
+                                <p class="text-gray-500 mb-6 max-w-sm mx-auto">Start building your online presence by selecting a professional template.</p>
+                                <a href="../templates.php" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-xl font-semibold shadow-lg shadow-primary-500/25 hover:from-primary-600 hover:to-primary-700 transition-all duration-200">
+                                    <i class="fas fa-rocket mr-2"></i>Choose a Template
                                 </a>
                             </div>
                         <?php else: ?>
                             <div class="space-y-4">
                                 <?php foreach ($sites as $site): ?>
-                                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                                    <div class="group flex items-center justify-between p-5 bg-gray-50 rounded-xl hover:bg-primary-50 border border-transparent hover:border-primary-100 transition-all duration-200">
                                         <div class="flex items-center space-x-4">
-                                            <div class="w-12 h-12 bg-primary rounded-lg flex items-center justify-center">
-                                                <i class="fas fa-globe text-white"></i>
+                                            <div class="w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl flex items-center justify-center shadow-md shadow-primary-500/20 group-hover:shadow-lg group-hover:shadow-primary-500/30 transition-all duration-200">
+                                                <i class="fas fa-globe text-white text-lg"></i>
                                             </div>
                                             <div>
-                                                <h3 class="font-semibold text-gray-800"><?php echo htmlspecialchars($site['site_name'] ?? 'Untitled Site'); ?></h3>
-                                                <p class="text-sm text-gray-500">Template: <?php echo htmlspecialchars($site['template_name']); ?></p>
+                                                <h3 class="font-bold text-dark group-hover:text-primary-600 transition-colors"><?php echo htmlspecialchars($site['site_name'] ?? 'Untitled Site'); ?></h3>
+                                                <p class="text-sm text-gray-500 flex items-center mt-1">
+                                                    <i class="fas fa-palette text-xs mr-1.5"></i>
+                                                    <?php echo htmlspecialchars($site['template_name']); ?>
+                                                </p>
                                             </div>
                                         </div>
-                                        <div class="flex items-center space-x-3">
-                                            <?php echo getStatusBadge($site['status']); ?>
-                                            <a href="edit-site.php?id=<?php echo $site['id']; ?>" class="text-primary hover:underline">
-                                                <i class="fas fa-edit"></i>
-                                            </a>
+                                        <div class="flex items-center space-x-4">
+                                            <?php 
+                                            $statusClasses = [
+                                                'draft' => 'bg-gray-100 text-gray-600',
+                                                'pending' => 'bg-amber-100 text-amber-700',
+                                                'active' => 'bg-green-100 text-green-700',
+                                                'published' => 'bg-green-100 text-green-700'
+                                            ];
+                                            $statusClass = $statusClasses[$site['status']] ?? 'bg-gray-100 text-gray-600';
+                                            ?>
+                                            <span class="px-3 py-1.5 <?php echo $statusClass; ?> text-xs font-semibold rounded-lg capitalize">
+                                                <?php echo $site['status']; ?>
+                                            </span>
+                                            <div class="flex items-center space-x-2">
+                                                <a href="preview-site.php?id=<?php echo $site['id']; ?>" class="w-9 h-9 bg-white rounded-lg flex items-center justify-center text-gray-400 hover:text-primary-600 hover:bg-primary-50 border border-gray-200 hover:border-primary-200 transition-all" title="Preview">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <a href="edit-site.php?id=<?php echo $site['id']; ?>" class="w-9 h-9 bg-white rounded-lg flex items-center justify-center text-gray-400 hover:text-primary-600 hover:bg-primary-50 border border-gray-200 hover:border-primary-200 transition-all" title="Edit">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                            </div>
                                         </div>
                                     </div>
                                 <?php endforeach; ?>
@@ -151,29 +223,54 @@ try {
                 </div>
 
                 <!-- Recent Requests -->
-                <div class="bg-white rounded-xl shadow">
-                    <div class="p-6 border-b flex justify-between items-center">
-                        <h2 class="text-xl font-bold text-gray-800">Customization Requests</h2>
-                        <a href="custom-request.php" class="text-primary hover:underline text-sm">
-                            <i class="fas fa-plus mr-1"></i>New Request
+                <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+                    <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-gray-50 to-white">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 bg-accent-100 rounded-xl flex items-center justify-center mr-3">
+                                <i class="fas fa-palette text-accent-600"></i>
+                            </div>
+                            <h2 class="text-xl font-bold text-dark">Customization Requests</h2>
+                        </div>
+                        <a href="custom-request.php" class="inline-flex items-center px-4 py-2 bg-accent-50 text-accent-600 rounded-lg text-sm font-medium hover:bg-accent-100 transition-colors">
+                            <i class="fas fa-plus mr-2"></i>New Request
                         </a>
                     </div>
                     <div class="p-6">
                         <?php if (empty($requests)): ?>
-                            <div class="text-center py-8">
-                                <i class="fas fa-palette text-4xl text-gray-300 mb-4"></i>
-                                <p class="text-gray-500 mb-4">No customization requests yet.</p>
-                                <a href="custom-request.php" class="text-primary hover:underline">Submit a request</a>
+                            <div class="text-center py-12">
+                                <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                                    <i class="fas fa-palette text-4xl text-gray-400"></i>
+                                </div>
+                                <h3 class="text-lg font-semibold text-dark mb-2">No requests yet</h3>
+                                <p class="text-gray-500 mb-6 max-w-sm mx-auto">Need custom changes to your website? Our team is ready to help!</p>
+                                <a href="custom-request.php" class="inline-flex items-center text-accent-600 font-semibold hover:text-accent-700 transition-colors">
+                                    <i class="fas fa-magic mr-2"></i>Submit a request
+                                </a>
                             </div>
                         <?php else: ?>
                             <div class="space-y-3">
-                                <?php foreach ($requests as $request): ?>
-                                    <div class="flex items-center justify-between p-3 border rounded-lg">
-                                        <div>
-                                            <p class="font-medium text-gray-800 capitalize"><?php echo $request['request_type']; ?> Change</p>
-                                            <p class="text-sm text-gray-500"><?php echo timeAgo($request['created_at']); ?></p>
+                                <?php foreach ($requests as $request): 
+                                    $statusColors = [
+                                        'pending' => ['bg' => 'bg-amber-100', 'text' => 'text-amber-700', 'icon' => 'fa-clock'],
+                                        'in_progress' => ['bg' => 'bg-blue-100', 'text' => 'text-blue-700', 'icon' => 'fa-spinner fa-spin'],
+                                        'completed' => ['bg' => 'bg-green-100', 'text' => 'text-green-700', 'icon' => 'fa-check-circle'],
+                                        'rejected' => ['bg' => 'bg-red-100', 'text' => 'text-red-700', 'icon' => 'fa-times-circle']
+                                    ];
+                                    $statusStyle = $statusColors[$request['status']] ?? $statusColors['pending'];
+                                ?>
+                                    <div class="flex items-center justify-between p-4 border border-gray-100 rounded-xl hover:border-primary-100 hover:bg-primary-50/30 transition-all duration-200">
+                                        <div class="flex items-center space-x-3">
+                                            <div class="w-10 h-10 <?php echo $statusStyle['bg']; ?> rounded-lg flex items-center justify-center">
+                                                <i class="fas <?php echo $statusStyle['icon']; ?> <?php echo $statusStyle['text']; ?>"></i>
+                                            </div>
+                                            <div>
+                                                <p class="font-semibold text-dark capitalize"><?php echo $request['request_type']; ?> Change</p>
+                                                <p class="text-sm text-gray-500"><?php echo timeAgo($request['created_at']); ?></p>
+                                            </div>
                                         </div>
-                                        <?php echo getStatusBadge($request['status']); ?>
+                                        <span class="px-3 py-1.5 <?php echo $statusStyle['bg']; ?> <?php echo $statusStyle['text']; ?> text-xs font-semibold rounded-lg capitalize">
+                                            <?php echo str_replace('_', ' ', $request['status']); ?>
+                                        </span>
                                     </div>
                                 <?php endforeach; ?>
                             </div>
@@ -185,54 +282,118 @@ try {
             <!-- Sidebar -->
             <div class="space-y-6">
                 <!-- Business Profile Card -->
-                <div class="bg-white rounded-xl shadow p-6">
-                    <h3 class="text-lg font-bold text-gray-800 mb-4">Business Profile</h3>
-                    <?php if ($profile): ?>
-                        <div class="space-y-3">
-                            <div>
-                                <p class="text-sm text-gray-500">Business Name</p>
-                                <p class="font-medium text-gray-800"><?php echo htmlspecialchars($profile['business_name']); ?></p>
+                <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+                    <div class="p-6 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 bg-secondary-100 rounded-xl flex items-center justify-center mr-3">
+                                <i class="fas fa-building text-secondary-600"></i>
                             </div>
-                            <div>
-                                <p class="text-sm text-gray-500">Business Type</p>
-                                <p class="font-medium text-gray-800 capitalize"><?php echo $profile['business_type']; ?></p>
-                            </div>
+                            <h3 class="text-lg font-bold text-dark">Business Profile</h3>
                         </div>
-                        <a href="profile.php" class="mt-4 block text-center text-primary hover:underline text-sm">
-                            <i class="fas fa-edit mr-1"></i>Edit Profile
-                        </a>
-                    <?php else: ?>
-                        <p class="text-gray-500">Profile not set up.</p>
-                        <a href="profile.php" class="text-primary hover:underline text-sm">Complete your profile</a>
-                    <?php endif; ?>
+                    </div>
+                    <div class="p-6">
+                        <?php if ($profile): ?>
+                            <div class="space-y-4">
+                                <div class="p-4 bg-gray-50 rounded-xl">
+                                    <p class="text-xs text-gray-500 uppercase tracking-wide font-medium mb-1">Business Name</p>
+                                    <p class="font-semibold text-dark"><?php echo htmlspecialchars($profile['business_name']); ?></p>
+                                </div>
+                                <div class="p-4 bg-gray-50 rounded-xl">
+                                    <p class="text-xs text-gray-500 uppercase tracking-wide font-medium mb-1">Business Type</p>
+                                    <p class="font-semibold text-dark capitalize flex items-center">
+                                        <?php 
+                                        $typeIcons = [
+                                            'retail' => '🛒',
+                                            'food' => '🍽️',
+                                            'freelance' => '💼',
+                                            'services' => '🔧',
+                                            'other' => '📦'
+                                        ];
+                                        echo ($typeIcons[$profile['business_type']] ?? '📦') . ' ';
+                                        ?>
+                                        <?php echo $profile['business_type']; ?>
+                                    </p>
+                                </div>
+                            </div>
+                            <a href="profile.php" class="mt-6 flex items-center justify-center p-3 bg-primary-50 text-primary-600 rounded-xl font-medium hover:bg-primary-100 transition-colors">
+                                <i class="fas fa-edit mr-2"></i>Edit Profile
+                            </a>
+                        <?php else: ?>
+                            <div class="text-center py-4">
+                                <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <i class="fas fa-building text-2xl text-gray-400"></i>
+                                </div>
+                                <p class="text-gray-500 mb-4">Complete your business profile</p>
+                                <a href="profile.php" class="inline-flex items-center text-primary-600 font-semibold hover:text-primary-700">
+                                    <i class="fas fa-plus-circle mr-2"></i>Set up profile
+                                </a>
+                            </div>
+                        <?php endif; ?>
+                    </div>
                 </div>
 
                 <!-- Quick Actions -->
-                <div class="bg-white rounded-xl shadow p-6">
-                    <h3 class="text-lg font-bold text-gray-800 mb-4">Quick Actions</h3>
-                    <div class="space-y-3">
-                        <a href="../templates.php" class="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
-                            <i class="fas fa-plus-circle text-primary mr-3"></i>
-                            <span>Create New Website</span>
-                        </a>
-                        <a href="custom-request.php" class="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
-                            <i class="fas fa-palette text-purple-500 mr-3"></i>
-                            <span>Request Customization</span>
-                        </a>
-                        <a href="profile.php" class="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
-                            <i class="fas fa-user-edit text-green-500 mr-3"></i>
-                            <span>Update Profile</span>
-                        </a>
+                <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+                    <div class="p-6 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 bg-primary-100 rounded-xl flex items-center justify-center mr-3">
+                                <i class="fas fa-bolt text-primary-600"></i>
+                            </div>
+                            <h3 class="text-lg font-bold text-dark">Quick Actions</h3>
+                        </div>
+                    </div>
+                    <div class="p-4">
+                        <div class="space-y-2">
+                            <a href="../templates.php" class="flex items-center p-4 rounded-xl hover:bg-primary-50 group transition-all duration-200">
+                                <div class="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center mr-3 group-hover:bg-primary-200 transition-colors">
+                                    <i class="fas fa-plus-circle text-primary-600"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium text-dark group-hover:text-primary-600 transition-colors">Create New Website</p>
+                                    <p class="text-xs text-gray-500">Choose from templates</p>
+                                </div>
+                                <i class="fas fa-chevron-right ml-auto text-gray-300 group-hover:text-primary-400 transition-colors"></i>
+                            </a>
+                            <a href="custom-request.php" class="flex items-center p-4 rounded-xl hover:bg-accent-50 group transition-all duration-200">
+                                <div class="w-10 h-10 bg-accent-100 rounded-lg flex items-center justify-center mr-3 group-hover:bg-accent-200 transition-colors">
+                                    <i class="fas fa-palette text-accent-600"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium text-dark group-hover:text-accent-600 transition-colors">Request Customization</p>
+                                    <p class="text-xs text-gray-500">Get custom changes</p>
+                                </div>
+                                <i class="fas fa-chevron-right ml-auto text-gray-300 group-hover:text-accent-400 transition-colors"></i>
+                            </a>
+                            <a href="profile.php" class="flex items-center p-4 rounded-xl hover:bg-secondary-50 group transition-all duration-200">
+                                <div class="w-10 h-10 bg-secondary-100 rounded-lg flex items-center justify-center mr-3 group-hover:bg-secondary-200 transition-colors">
+                                    <i class="fas fa-user-edit text-secondary-600"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium text-dark group-hover:text-secondary-600 transition-colors">Update Profile</p>
+                                    <p class="text-xs text-gray-500">Manage your info</p>
+                                </div>
+                                <i class="fas fa-chevron-right ml-auto text-gray-300 group-hover:text-secondary-400 transition-colors"></i>
+                            </a>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Help Card -->
-                <div class="bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl shadow p-6 text-white">
-                    <h3 class="text-lg font-bold mb-2">Need Help?</h3>
-                    <p class="text-blue-100 text-sm mb-4">Our team is ready to assist you with any questions.</p>
-                    <a href="mailto:support@fildevstudio.com" class="inline-block bg-white text-primary px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-100 transition">
-                        <i class="fas fa-envelope mr-2"></i>Contact Support
-                    </a>
+                <div class="bg-gradient-to-br from-primary-600 via-primary-700 to-accent-700 rounded-2xl shadow-xl p-6 text-white relative overflow-hidden">
+                    <!-- Decorative -->
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+                    <div class="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full translate-y-1/2 -translate-x-1/2"></div>
+                    
+                    <div class="relative">
+                        <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mb-4">
+                            <i class="fas fa-headset text-xl"></i>
+                        </div>
+                        <h3 class="text-lg font-bold mb-2">Need Help?</h3>
+                        <p class="text-primary-100 text-sm mb-5">Our team is ready to assist you with any questions about your website.</p>
+                        <a href="mailto:support@fildevstudio.com" class="inline-flex items-center px-5 py-2.5 bg-white text-primary-600 rounded-xl text-sm font-semibold hover:bg-gray-100 transition-colors shadow-lg">
+                            <i class="fas fa-envelope mr-2"></i>Contact Support
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>

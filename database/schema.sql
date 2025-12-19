@@ -118,7 +118,7 @@ CREATE TABLE IF NOT EXISTS activity_log (
 -- Insert Default Admin User
 -- Password: admin123 (hashed)
 INSERT INTO users (name, email, password, role) VALUES 
-('Admin', 'admin@fildevstudio.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin');
+('Admin', 'admin@fildevstudio.com', '$2y$10$sBJd0ElPwHJwFT.2Vm7Qmuxi7gDLtHaqUq.ZukHw5OWZ7toc0wVaK', 'admin');
 
 -- Insert Sample Templates
 INSERT INTO templates (name, category, description, preview_image, folder_path) VALUES 

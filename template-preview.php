@@ -4,6 +4,7 @@
  */
 $pageTitle = "Template Preview - FilDevStudio";
 require_once 'includes/header.php';
+require_once 'includes/functions.php';
 
 $templateId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
