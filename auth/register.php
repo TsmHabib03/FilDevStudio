@@ -134,7 +134,7 @@ $pageTitle = "Register - FilDevStudio";
             <div class="relative z-10 flex flex-col justify-center px-12 xl:px-20">
                 <!-- Logo -->
                 <a href="../index.php" class="flex items-center space-x-3 mb-12">
-                    <img src="../assets/images/logo.svg" alt="FilDevStudio Logo" class="w-14 h-14 rounded-xl shadow-lg">
+                    <img src="../assets/images/logo.png" alt="FilDevStudio Logo" class="w-14 h-14 rounded-xl shadow-lg">
                     <div>
                         <span class="text-2xl font-bold text-white">FilDev<span class="text-primary-300">Studio</span></span>
                         <span class="block text-sm text-primary-200">Code & Creative Solutions</span>

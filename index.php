@@ -486,6 +486,234 @@ require_once 'includes/header.php';
     </div>
 </section>
 
+<!-- Organizational Chart Section - Arctic Tech Style -->
+<style>
+    /* Arctic Tech Animations */
+    @keyframes fade-in-up {
+        0% { opacity: 0; transform: translateY(30px); }
+        100% { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes float-gentle {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-8px); }
+    }
+    @keyframes pulse-subtle {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
+    }
+    .arctic-fade-in { animation: fade-in-up 0.8s ease-out forwards; opacity: 0; }
+    .arctic-float { animation: float-gentle 6s ease-in-out infinite; }
+    .arctic-pulse { animation: pulse-subtle 3s ease-in-out infinite; }
+    .arctic-delay-1 { animation-delay: 0.1s; }
+    .arctic-delay-2 { animation-delay: 0.2s; }
+    .arctic-delay-3 { animation-delay: 0.3s; }
+    .arctic-delay-4 { animation-delay: 0.4s; }
+    .arctic-delay-5 { animation-delay: 0.5s; }
+    .arctic-delay-6 { animation-delay: 0.6s; }
+    .arctic-delay-7 { animation-delay: 0.7s; }
+    .arctic-delay-8 { animation-delay: 0.8s; }
+</style>
+
+<section id="team" class="py-24 relative overflow-hidden bg-slate-50">
+    <!-- Subtle Background Pattern -->
+    <div class="absolute inset-0 pointer-events-none">
+        <div class="absolute inset-0 opacity-[0.02]" style="background-image: radial-gradient(circle at 1px 1px, #64748b 1px, transparent 0); background-size: 32px 32px;"></div>
+    </div>
+
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        
+        <!-- Section Header -->
+        <div class="text-center mb-20 arctic-fade-in">
+            <p class="text-sm font-medium tracking-widest text-slate-400 uppercase mb-3">Our Team</p>
+            <h2 class="text-4xl md:text-5xl font-semibold text-slate-900 tracking-tight">
+                Meet the People Behind FilDevStudio
+            </h2>
+        </div>
+
+        <!-- Org Chart Container with SVG Connectors -->
+        <div class="relative">
+            
+            <!-- SVG Connector Lines (Desktop) -->
+            <svg class="hidden lg:block absolute inset-0 w-full h-full pointer-events-none" style="z-index: 0;" preserveAspectRatio="none">
+                <!-- CEO to Chief of Staff -->
+                <path d="M 50% 120 C 50% 160, 50% 160, 50% 200" 
+                      stroke="#cbd5e1" stroke-width="2" fill="none" stroke-linecap="round"
+                      style="stroke-dasharray: 8 4;" class="arctic-pulse"/>
+                <!-- Chief of Staff to horizontal spread -->
+                <path d="M 400 320 C 400 380, 400 380, 400 400 C 400 420, 120 420, 120 460" 
+                      stroke="#cbd5e1" stroke-width="2" fill="none" stroke-linecap="round"
+                      style="stroke-dasharray: 8 4;" class="arctic-pulse"/>
+                <path d="M 400 320 C 400 380, 400 380, 400 460" 
+                      stroke="#cbd5e1" stroke-width="2" fill="none" stroke-linecap="round"
+                      style="stroke-dasharray: 8 4;" class="arctic-pulse"/>
+                <path d="M 400 320 C 400 380, 400 380, 400 400 C 400 420, 680 420, 680 460" 
+                      stroke="#cbd5e1" stroke-width="2" fill="none" stroke-linecap="round"
+                      style="stroke-dasharray: 8 4;" class="arctic-pulse"/>
+            </svg>
+            
+            <!-- ==================== LEVEL 1: CEO ==================== -->
+            <div class="flex justify-center mb-16 arctic-fade-in arctic-delay-1">
+                <div class="arctic-float">
+                    <div class="bg-white backdrop-blur-sm p-8 rounded-2xl shadow-sm text-center w-72 border border-slate-200/80 hover:shadow-md hover:border-slate-300 transition-all duration-300">
+                        <!-- Avatar -->
+                        <div class="relative w-24 h-24 mx-auto mb-5">
+                            <div class="absolute -inset-1 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full opacity-20 blur-sm"></div>
+                            <div class="relative w-24 h-24 rounded-full overflow-hidden ring-2 ring-blue-500/30 ring-offset-2 ring-offset-white">
+                                <img src="assets/images/Habib Jaudian.jpg" alt="Habib D. Jaudian" class="w-full h-full object-cover">
+                            </div>
+                        </div>
+                        
+                        <h3 class="text-xl font-semibold text-slate-900 mb-1">Habib D. Jaudian</h3>
+                        <span class="inline-flex items-center px-3 py-1 bg-blue-50 text-blue-600 text-sm font-medium rounded-full">
+                            Chief Executive Officer
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Visual Connector (Mobile-friendly) -->
+            <div class="flex justify-center mb-8">
+                <div class="w-px h-12 bg-gradient-to-b from-slate-300 to-slate-200"></div>
+            </div>
+
+            <!-- ==================== LEVEL 2: Chief of Staff ==================== -->
+            <div class="flex justify-center mb-16 arctic-fade-in arctic-delay-2">
+                <div class="bg-white backdrop-blur-sm p-6 rounded-xl shadow-sm text-center w-64 border border-slate-200/80 hover:shadow-md hover:border-slate-300 transition-all duration-300">
+                    <!-- Avatar -->
+                    <div class="relative w-20 h-20 mx-auto mb-4">
+                        <div class="relative w-20 h-20 rounded-full overflow-hidden ring-2 ring-slate-200 ring-offset-2 ring-offset-white">
+                            <img src="assets/images/Deniel Cruz.jpg" alt="Deniel Cruz" class="w-full h-full object-cover">
+                        </div>
+                    </div>
+                    <h3 class="text-lg font-semibold text-slate-900 mb-1">Deniel Cruz</h3>
+                    <span class="inline-flex items-center px-3 py-1 bg-slate-100 text-slate-600 text-sm font-medium rounded-full">
+                        Chief of Staff
+                    </span>
+                </div>
+            </div>
+
+            <!-- Visual Connector with Branches -->
+            <div class="hidden lg:flex justify-center items-center mb-8">
+                <div class="flex items-center" style="width: 70%;">
+                    <div class="flex-1 h-px bg-gradient-to-r from-transparent via-slate-300 to-slate-300"></div>
+                    <div class="w-2 h-2 bg-slate-300 rounded-full"></div>
+                    <div class="flex-1 h-px bg-slate-300"></div>
+                    <div class="w-2 h-2 bg-slate-300 rounded-full"></div>
+                    <div class="flex-1 h-px bg-gradient-to-l from-transparent via-slate-300 to-slate-300"></div>
+                </div>
+            </div>
+
+            <!-- ==================== LEVEL 3: Departments ==================== -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-6">
+                
+                <!-- ===== Operations Column ===== -->
+                <div class="flex flex-col items-center arctic-fade-in arctic-delay-3">
+                    <!-- Department Label -->
+                    <div class="mb-4">
+                        <span class="text-xs font-semibold tracking-widest text-slate-400 uppercase">Operations</span>
+                    </div>
+                    <!-- Member Card -->
+                    <div class="group bg-white backdrop-blur-sm rounded-xl p-5 w-full max-w-xs shadow-sm border border-slate-200/80 hover:shadow-md hover:border-slate-300 transition-all duration-300">
+                        <div class="flex items-center gap-4">
+                            <div class="relative w-14 h-14 rounded-full overflow-hidden ring-2 ring-slate-100 flex-shrink-0">
+                                <img src="assets/images/George Baltar.jpg" alt="George Baltar" class="w-full h-full object-cover">
+                            </div>
+                            <div class="min-w-0">
+                                <h4 class="font-semibold text-slate-900 truncate">George Baltar</h4>
+                                <span class="text-sm text-slate-500">Client Manager</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===== Development Column ===== -->
+                <div class="flex flex-col items-center arctic-fade-in arctic-delay-4">
+                    <!-- Department Label -->
+                    <div class="mb-4">
+                        <span class="text-xs font-semibold tracking-widest text-slate-400 uppercase">Development</span>
+                    </div>
+                    <div class="space-y-3 w-full max-w-xs">
+                        <!-- Dev 1 -->
+                        <div class="group bg-white backdrop-blur-sm rounded-xl p-4 shadow-sm border border-slate-200/80 hover:shadow-md hover:border-slate-300 transition-all duration-300 arctic-fade-in arctic-delay-5">
+                            <div class="flex items-center gap-3">
+                                <div class="relative w-12 h-12 rounded-full overflow-hidden ring-2 ring-slate-100 flex-shrink-0">
+                                    <img src="assets/images/Jermaine Pereja.jpg" alt="Jermaine Pereja" class="w-full h-full object-cover">
+                                </div>
+                                <div class="min-w-0">
+                                    <h4 class="font-semibold text-slate-900 truncate text-sm">Jermaine Pereja</h4>
+                                    <span class="text-xs text-slate-500">Web Developer</span>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Dev 2 -->
+                        <div class="group bg-white backdrop-blur-sm rounded-xl p-4 shadow-sm border border-slate-200/80 hover:shadow-md hover:border-slate-300 transition-all duration-300 arctic-fade-in arctic-delay-6">
+                            <div class="flex items-center gap-3">
+                                <div class="relative w-12 h-12 rounded-full overflow-hidden ring-2 ring-slate-100 flex-shrink-0">
+                                    <img src="assets/images/Kenn Doliguez.jpg" alt="Kenn Jianrie Doliguez" class="w-full h-full object-cover">
+                                </div>
+                                <div class="min-w-0">
+                                    <h4 class="font-semibold text-slate-900 truncate text-sm">Kenn Doliguez</h4>
+                                    <span class="text-xs text-slate-500">Web Developer</span>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Dev 3 -->
+                        <div class="group bg-white backdrop-blur-sm rounded-xl p-4 shadow-sm border border-slate-200/80 hover:shadow-md hover:border-slate-300 transition-all duration-300 arctic-fade-in arctic-delay-7">
+                            <div class="flex items-center gap-3">
+                                <div class="relative w-12 h-12 rounded-full overflow-hidden ring-2 ring-slate-100 flex-shrink-0">
+                                    <img src="assets/images/Prince Sebuc.jpg" alt="Prince Charles Sebuc" class="w-full h-full object-cover">
+                                </div>
+                                <div class="min-w-0">
+                                    <h4 class="font-semibold text-slate-900 truncate text-sm">Prince Sebuc</h4>
+                                    <span class="text-xs text-slate-500">Web Developer</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===== Design Column ===== -->
+                <div class="flex flex-col items-center md:col-span-2 lg:col-span-1 arctic-fade-in arctic-delay-4">
+                    <!-- Department Label -->
+                    <div class="mb-4">
+                        <span class="text-xs font-semibold tracking-widest text-slate-400 uppercase">Design</span>
+                    </div>
+                    <div class="space-y-3 w-full max-w-xs">
+                        <!-- Designer 1 -->
+                        <div class="group bg-white backdrop-blur-sm rounded-xl p-4 shadow-sm border border-slate-200/80 hover:shadow-md hover:border-slate-300 transition-all duration-300 arctic-fade-in arctic-delay-5">
+                            <div class="flex items-center gap-3">
+                                <div class="relative w-12 h-12 rounded-full overflow-hidden ring-2 ring-slate-100 flex-shrink-0">
+                                    <img src="assets/images/Althea Maglangit.jpg" alt="Althea Maglangit" class="w-full h-full object-cover">
+                                </div>
+                                <div class="min-w-0">
+                                    <h4 class="font-semibold text-slate-900 truncate text-sm">Althea Maglangit</h4>
+                                    <span class="text-xs text-slate-500">UI/UX Designer</span>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Designer 2 -->
+                        <div class="group bg-white backdrop-blur-sm rounded-xl p-4 shadow-sm border border-slate-200/80 hover:shadow-md hover:border-slate-300 transition-all duration-300 arctic-fade-in arctic-delay-6">
+                            <div class="flex items-center gap-3">
+                                <div class="relative w-12 h-12 rounded-full overflow-hidden ring-2 ring-slate-100 flex-shrink-0">
+                                    <img src="assets/images/Cassey Balacuit.jpg" alt="Cassey Jelly Balacuit" class="w-full h-full object-cover">
+                                </div>
+                                <div class="min-w-0">
+                                    <h4 class="font-semibold text-slate-900 truncate text-sm">Cassey Balacuit</h4>
+                                    <span class="text-xs text-slate-500">UI/UX Designer</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            <!-- End Departments -->
+
+        </div>
+        <!-- End Org Chart -->
+    </div>
+</section>
+
 <!-- CTA Section - Enhanced with gradient and better layout -->
 <section class="relative py-24 overflow-hidden">
     <!-- Background -->
