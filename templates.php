@@ -25,6 +25,8 @@ if (empty($templates)) {
         ['id' => 4, 'name' => 'Service Business', 'category' => 'services', 'description' => 'Template for service-based businesses', 'preview_image' => 'assets/images/templates/services.jpg', 'features' => ['Service List', 'Testimonials', 'Booking']],
         ['id' => 5, 'name' => 'General Business', 'category' => 'general', 'description' => 'Versatile template for any business type', 'preview_image' => 'assets/images/templates/general.jpg', 'features' => ['Flexible Sections', 'Multi-purpose', 'SEO Ready']],
         ['id' => 6, 'name' => 'E-Commerce Starter', 'category' => 'retail', 'description' => 'Start selling online with this e-commerce template', 'preview_image' => 'assets/images/templates/ecommerce.jpg', 'features' => ['Product Pages', 'Checkout Flow', 'Inventory']],
+        ['id' => 7, 'name' => 'Urban Streetwear', 'category' => 'retail', 'description' => 'Edgy and modern design for fashion brands', 'preview_image' => 'assets/images/templates/streetwear.jpg', 'features' => ['Lookbook Style', 'Instagram Feed', 'Dark Theme']],
+        ['id' => 8, 'name' => 'Tech Startup', 'category' => 'general', 'description' => 'Clean, minimal, and trustworthy design for tech companies', 'preview_image' => 'assets/images/templates/tech.jpg', 'features' => ['SaaS Features', 'Pricing Tables', 'Integration Logos']],
     ];
 }
 
