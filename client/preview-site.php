@@ -751,6 +751,543 @@ $contactInfo = $site['contact_info'] ?? '';
         </footer>
     </div>
 
+    <?php elseif ($templateId == 9): // ========== BOUTIQUE SHOP ========== ?>
+    <div class="min-h-screen" style="background: #FDF8F8;">
+        <!-- Header -->
+        <nav class="bg-white border-b sticky top-8 z-50">
+            <div class="max-w-6xl mx-auto px-4 md:px-8 py-4 flex justify-between items-center">
+                <div class="text-xl md:text-2xl font-light tracking-widest" style="color: <?php echo $primaryColor; ?>;">
+                    <?php echo htmlspecialchars(strtoupper($siteName)); ?>
+                </div>
+                <div class="hidden md:flex space-x-8 text-sm text-gray-500 tracking-wide">
+                    <a href="#home" class="hover:text-gray-900">Home</a>
+                    <a href="#about" class="hover:text-gray-900">Collection</a>
+                    <a href="#services" class="hover:text-gray-900">New In</a>
+                    <a href="#contact" class="hover:text-gray-900">Contact</a>
+                </div>
+                <div class="flex items-center space-x-5 text-gray-400">
+                    <i class="fas fa-search cursor-pointer hover:text-gray-600"></i>
+                    <i class="fas fa-heart cursor-pointer hover:text-gray-600"></i>
+                    <i class="fas fa-shopping-bag cursor-pointer hover:text-gray-600"></i>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Hero -->
+        <section id="home" class="py-16 md:py-24 px-4 text-center relative" style="background: linear-gradient(135deg, <?php echo $primaryColor; ?>10, <?php echo $accentColor; ?>10);">
+            <div class="max-w-4xl mx-auto">
+                <p class="text-sm tracking-widest mb-6" style="color: <?php echo $primaryColor; ?>;">✦ NEW COLLECTION ✦</p>
+                <h1 class="text-4xl md:text-6xl font-light tracking-wide mb-6" style="font-family: 'Playfair Display', serif; color: <?php echo $secondaryColor; ?>;">
+                    <?php echo htmlspecialchars($heroTitle); ?>
+                </h1>
+                <p class="text-gray-500 text-lg mb-10 max-w-xl mx-auto"><?php echo htmlspecialchars($heroSubtitle); ?></p>
+                <a href="#services" class="inline-block px-10 py-4 text-white text-sm tracking-widest hover:opacity-90 transition" style="background: <?php echo $primaryColor; ?>;">
+                    SHOP NOW
+                </a>
+            </div>
+        </section>
+
+        <!-- About -->
+        <section id="about" class="py-16 px-4 md:px-8 bg-white">
+            <div class="max-w-4xl mx-auto text-center">
+                <h2 class="text-2xl font-light tracking-wide mb-6" style="font-family: 'Playfair Display', serif; color: <?php echo $primaryColor; ?>;">Our Story</h2>
+                <div class="w-16 h-px mx-auto mb-8" style="background: <?php echo $primaryColor; ?>;"></div>
+                <p class="text-gray-600 leading-relaxed max-w-2xl mx-auto"><?php echo nl2br(htmlspecialchars($aboutContent)); ?></p>
+            </div>
+        </section>
+
+        <!-- Services/Products -->
+        <section id="services" class="py-16 px-4 md:px-8" style="background: <?php echo $primaryColor; ?>05;">
+            <div class="max-w-6xl mx-auto">
+                <h2 class="text-2xl font-light tracking-wide text-center mb-12" style="font-family: 'Playfair Display', serif; color: <?php echo $primaryColor; ?>;">Featured Collection</h2>
+                
+                <?php if (!empty($servicesContent)): ?>
+                    <div class="max-w-3xl mx-auto text-center text-gray-600 leading-relaxed"><?php echo nl2br(htmlspecialchars($servicesContent)); ?></div>
+                <?php else: ?>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+                        <?php 
+                        $products = [
+                            ['icon' => 'fa-tshirt', 'title' => 'Tops', 'price' => '₱1,299'],
+                            ['icon' => 'fa-gem', 'title' => 'Accessories', 'price' => '₱899'],
+                            ['icon' => 'fa-shopping-bag', 'title' => 'Bags', 'price' => '₱2,499'],
+                            ['icon' => 'fa-shoe-prints', 'title' => 'Footwear', 'price' => '₱1,899'],
+                        ];
+                        foreach($products as $product): ?>
+                        <div class="bg-white p-6 text-center group cursor-pointer">
+                            <div class="aspect-square flex items-center justify-center mb-4" style="background: <?php echo $primaryColor; ?>08;">
+                                <i class="fas <?php echo $product['icon']; ?> text-4xl transition group-hover:scale-110" style="color: <?php echo $primaryColor; ?>40;"></i>
+                            </div>
+                            <p class="text-sm tracking-wide mb-1"><?php echo $product['title']; ?></p>
+                            <p class="font-medium" style="color: <?php echo $primaryColor; ?>;"><?php echo $product['price']; ?></p>
+                        </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </section>
+
+        <!-- Contact -->
+        <section id="contact" class="py-16 px-4 md:px-8 bg-white">
+            <div class="max-w-4xl mx-auto text-center">
+                <h2 class="text-2xl font-light tracking-wide mb-6" style="font-family: 'Playfair Display', serif; color: <?php echo $primaryColor; ?>;">Get In Touch</h2>
+                <div class="w-16 h-px mx-auto mb-8" style="background: <?php echo $primaryColor; ?>;"></div>
+                
+                <?php if (!empty($contactInfo)): ?>
+                    <p class="text-gray-600 whitespace-pre-line"><?php echo htmlspecialchars($contactInfo); ?></p>
+                <?php else: ?>
+                    <div class="flex flex-wrap justify-center gap-8 text-gray-500">
+                        <?php if (!empty($site['contact_email'])): ?>
+                            <p><i class="fas fa-envelope mr-2" style="color: <?php echo $primaryColor; ?>;"></i><?php echo htmlspecialchars($site['contact_email']); ?></p>
+                        <?php endif; ?>
+                        <?php if (!empty($site['contact_phone'])): ?>
+                            <p><i class="fas fa-phone mr-2" style="color: <?php echo $primaryColor; ?>;"></i><?php echo htmlspecialchars($site['contact_phone']); ?></p>
+                        <?php endif; ?>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="py-10 px-4 text-center" style="background: <?php echo $secondaryColor; ?>;">
+            <p class="text-white/90 text-sm tracking-widest mb-2"><?php echo htmlspecialchars(strtoupper($siteName)); ?></p>
+            <p class="text-white/50 text-xs">&copy; <?php echo date('Y'); ?> All rights reserved. Powered by FilDevStudio</p>
+        </footer>
+    </div>
+
+    <?php elseif ($templateId == 10): // ========== ELECTRONICS STORE ========== ?>
+    <div class="min-h-screen" style="background: <?php echo $primaryColor; ?>;">
+        <!-- Header -->
+        <nav class="border-b border-white/10 sticky top-8 z-50" style="background: <?php echo $primaryColor; ?>;">
+            <div class="max-w-6xl mx-auto px-4 md:px-8 py-4 flex justify-between items-center">
+                <div class="text-xl md:text-2xl font-bold tracking-tight text-white">
+                    <?php echo htmlspecialchars($siteName); ?>
+                </div>
+                <div class="hidden md:flex space-x-8 text-sm text-gray-400">
+                    <a href="#home" class="hover:text-white">Home</a>
+                    <a href="#about" class="hover:text-white">About</a>
+                    <a href="#services" class="hover:text-white">Products</a>
+                    <a href="#contact" class="hover:text-white">Contact</a>
+                </div>
+                <div class="flex items-center space-x-4 text-gray-400">
+                    <i class="fas fa-search cursor-pointer hover:text-white"></i>
+                    <i class="fas fa-shopping-cart cursor-pointer hover:text-white"></i>
+                </div>
+            </div>
+            <div class="border-b border-white/5">
+                <div class="max-w-6xl mx-auto px-4 py-2 flex justify-center space-x-8 text-xs text-gray-500">
+                    <span>📱 Phones</span><span>💻 Laptops</span><span>🎧 Audio</span><span>🎮 Gaming</span><span>📷 Cameras</span>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Hero -->
+        <section id="home" class="py-16 md:py-20 px-4 text-center" style="background: linear-gradient(135deg, <?php echo $secondaryColor; ?>, <?php echo $primaryColor; ?>);">
+            <div class="max-w-4xl mx-auto">
+                <p class="text-sm mb-4" style="color: <?php echo $accentColor; ?>;">🔥 HOT DEALS THIS WEEK</p>
+                <h1 class="text-4xl md:text-5xl font-bold text-white mb-6"><?php echo htmlspecialchars($heroTitle); ?></h1>
+                <p class="text-gray-400 text-lg mb-8 max-w-xl mx-auto"><?php echo htmlspecialchars($heroSubtitle); ?></p>
+                <a href="#services" class="inline-block px-8 py-3 text-sm font-bold rounded hover:opacity-90 transition" style="background: <?php echo $accentColor; ?>; color: <?php echo $primaryColor; ?>;">
+                    SHOP NOW
+                </a>
+            </div>
+        </section>
+
+        <!-- About -->
+        <section id="about" class="py-16 px-4 md:px-8" style="background: rgba(0,0,0,0.3);">
+            <div class="max-w-4xl mx-auto text-center">
+                <h2 class="text-2xl font-bold text-white mb-6">About Us</h2>
+                <div class="w-16 h-1 mx-auto rounded mb-8" style="background: <?php echo $accentColor; ?>;"></div>
+                <p class="text-gray-400 leading-relaxed"><?php echo nl2br(htmlspecialchars($aboutContent)); ?></p>
+            </div>
+        </section>
+
+        <!-- Services/Products -->
+        <section id="services" class="py-16 px-4 md:px-8" style="background: <?php echo $secondaryColor; ?>;">
+            <div class="max-w-6xl mx-auto">
+                <h2 class="text-2xl font-bold text-white text-center mb-12">Featured Products</h2>
+                
+                <?php if (!empty($servicesContent)): ?>
+                    <div class="max-w-3xl mx-auto text-center text-gray-400 leading-relaxed"><?php echo nl2br(htmlspecialchars($servicesContent)); ?></div>
+                <?php else: ?>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <?php 
+                        $products = [
+                            ['icon' => 'fa-mobile-alt', 'title' => 'Smartphone Pro', 'price' => '₱24,999'],
+                            ['icon' => 'fa-laptop', 'title' => 'Gaming Laptop', 'price' => '₱54,999'],
+                            ['icon' => 'fa-headphones-alt', 'title' => 'Wireless Earbuds', 'price' => '₱3,999'],
+                            ['icon' => 'fa-camera', 'title' => 'Action Camera', 'price' => '₱12,499'],
+                        ];
+                        foreach($products as $product): ?>
+                        <div class="p-4 rounded-lg" style="background: <?php echo $primaryColor; ?>;">
+                            <div class="aspect-square flex items-center justify-center mb-3 rounded" style="background: rgba(255,255,255,0.05);">
+                                <i class="fas <?php echo $product['icon']; ?> text-3xl" style="color: <?php echo $accentColor; ?>;"></i>
+                            </div>
+                            <p class="text-sm text-white mb-1"><?php echo $product['title']; ?></p>
+                            <p class="font-bold" style="color: <?php echo $accentColor; ?>;"><?php echo $product['price']; ?></p>
+                        </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </section>
+
+        <!-- Contact -->
+        <section id="contact" class="py-16 px-4 md:px-8" style="background: <?php echo $primaryColor; ?>;">
+            <div class="max-w-4xl mx-auto text-center">
+                <h2 class="text-2xl font-bold text-white mb-6">Contact Us</h2>
+                <div class="w-16 h-1 mx-auto rounded mb-8" style="background: <?php echo $accentColor; ?>;"></div>
+                
+                <?php if (!empty($contactInfo)): ?>
+                    <p class="text-gray-400 whitespace-pre-line"><?php echo htmlspecialchars($contactInfo); ?></p>
+                <?php else: ?>
+                    <div class="flex flex-wrap justify-center gap-8 text-gray-400">
+                        <?php if (!empty($site['contact_email'])): ?>
+                            <p><i class="fas fa-envelope mr-2" style="color: <?php echo $accentColor; ?>;"></i><?php echo htmlspecialchars($site['contact_email']); ?></p>
+                        <?php endif; ?>
+                        <?php if (!empty($site['contact_phone'])): ?>
+                            <p><i class="fas fa-phone mr-2" style="color: <?php echo $accentColor; ?>;"></i><?php echo htmlspecialchars($site['contact_phone']); ?></p>
+                        <?php endif; ?>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="py-8 px-4 text-center border-t border-white/10" style="background: <?php echo $secondaryColor; ?>;">
+            <p class="text-white font-bold mb-2"><?php echo htmlspecialchars($siteName); ?></p>
+            <p class="text-gray-500 text-xs">&copy; <?php echo date('Y'); ?> All rights reserved. Powered by FilDevStudio</p>
+        </footer>
+    </div>
+
+    <?php elseif ($templateId == 11): // ========== GROCERY & SUPERMARKET ========== ?>
+    <div class="min-h-screen bg-white">
+        <!-- Header -->
+        <nav class="sticky top-8 z-50" style="background: <?php echo $primaryColor; ?>;">
+            <div class="max-w-6xl mx-auto px-4 md:px-8 py-4 flex justify-between items-center">
+                <div class="text-xl md:text-2xl font-bold text-white flex items-center gap-2">
+                    🛒 <?php echo htmlspecialchars($siteName); ?>
+                </div>
+                <div class="hidden md:flex space-x-8 text-sm text-white/80">
+                    <a href="#home" class="hover:text-white">Home</a>
+                    <a href="#about" class="hover:text-white">About</a>
+                    <a href="#services" class="hover:text-white">Products</a>
+                    <a href="#contact" class="hover:text-white">Contact</a>
+                </div>
+                <div class="flex items-center space-x-4 text-white/80">
+                    <i class="fas fa-search cursor-pointer hover:text-white"></i>
+                    <div class="relative">
+                        <i class="fas fa-shopping-basket cursor-pointer hover:text-white"></i>
+                        <span class="absolute -top-2 -right-2 w-5 h-5 rounded-full text-xs flex items-center justify-center" style="background: <?php echo $accentColor; ?>; color: <?php echo $primaryColor; ?>;">3</span>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-white/10">
+                <div class="max-w-6xl mx-auto px-4 py-2 flex justify-center space-x-6 text-xs text-white/70">
+                    <span>🥬 Fresh Produce</span><span>🥩 Meat & Seafood</span><span>🥛 Dairy</span><span>🍞 Bakery</span><span>🧴 Household</span>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Hero -->
+        <section id="home" class="py-12 md:py-16 px-4 text-center" style="background: linear-gradient(135deg, <?php echo $primaryColor; ?>15, <?php echo $accentColor; ?>15);">
+            <div class="max-w-4xl mx-auto">
+                <p class="inline-block px-4 py-1 rounded-full text-sm mb-4" style="background: <?php echo $accentColor; ?>; color: white;">🏷️ DAILY DEALS - UP TO 50% OFF!</p>
+                <h1 class="text-3xl md:text-5xl font-bold mb-4" style="color: <?php echo $secondaryColor; ?>;"><?php echo htmlspecialchars($heroTitle); ?></h1>
+                <p class="text-gray-600 text-lg mb-8 max-w-xl mx-auto"><?php echo htmlspecialchars($heroSubtitle); ?></p>
+                <a href="#services" class="inline-block px-8 py-3 text-white font-semibold rounded-lg hover:opacity-90 transition" style="background: <?php echo $primaryColor; ?>;">
+                    Shop Now
+                </a>
+            </div>
+        </section>
+
+        <!-- About -->
+        <section id="about" class="py-16 px-4 md:px-8 bg-green-50">
+            <div class="max-w-4xl mx-auto text-center">
+                <h2 class="text-2xl font-bold mb-4" style="color: <?php echo $primaryColor; ?>;">About Our Store</h2>
+                <div class="w-16 h-1 mx-auto rounded mb-8" style="background: <?php echo $accentColor; ?>;"></div>
+                <p class="text-gray-600 leading-relaxed"><?php echo nl2br(htmlspecialchars($aboutContent)); ?></p>
+            </div>
+        </section>
+
+        <!-- Services/Products -->
+        <section id="services" class="py-16 px-4 md:px-8">
+            <div class="max-w-6xl mx-auto">
+                <h2 class="text-2xl font-bold text-center mb-12" style="color: <?php echo $primaryColor; ?>;">Fresh Products</h2>
+                
+                <?php if (!empty($servicesContent)): ?>
+                    <div class="max-w-3xl mx-auto text-center text-gray-600 leading-relaxed"><?php echo nl2br(htmlspecialchars($servicesContent)); ?></div>
+                <?php else: ?>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <?php 
+                        $products = [
+                            ['emoji' => '🍎', 'title' => 'Fresh Apples', 'price' => '₱99/kg', 'bg' => '#FEE2E2'],
+                            ['emoji' => '🥕', 'title' => 'Carrots', 'price' => '₱45/kg', 'bg' => '#FED7AA'],
+                            ['emoji' => '🥬', 'title' => 'Vegetables', 'price' => '₱65/bundle', 'bg' => '#D1FAE5'],
+                            ['emoji' => '🍞', 'title' => 'Fresh Bread', 'price' => '₱55/loaf', 'bg' => '#FEF3C7'],
+                        ];
+                        foreach($products as $product): ?>
+                        <div class="p-4 rounded-xl text-center cursor-pointer hover:shadow-md transition" style="background: <?php echo $product['bg']; ?>;">
+                            <p class="text-4xl mb-3"><?php echo $product['emoji']; ?></p>
+                            <p class="font-medium text-gray-800"><?php echo $product['title']; ?></p>
+                            <p class="font-bold" style="color: <?php echo $primaryColor; ?>;"><?php echo $product['price']; ?></p>
+                        </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </section>
+
+        <!-- Contact -->
+        <section id="contact" class="py-16 px-4 md:px-8" style="background: <?php echo $primaryColor; ?>;">
+            <div class="max-w-4xl mx-auto text-center">
+                <h2 class="text-2xl font-bold text-white mb-6">Visit Us Today!</h2>
+                <div class="w-16 h-1 mx-auto rounded mb-8" style="background: <?php echo $accentColor; ?>;"></div>
+                
+                <?php if (!empty($contactInfo)): ?>
+                    <p class="text-white/80 whitespace-pre-line"><?php echo htmlspecialchars($contactInfo); ?></p>
+                <?php else: ?>
+                    <div class="flex flex-wrap justify-center gap-8 text-white/80">
+                        <?php if (!empty($site['address'])): ?>
+                            <p><i class="fas fa-map-marker-alt mr-2" style="color: <?php echo $accentColor; ?>;"></i><?php echo htmlspecialchars($site['address']); ?></p>
+                        <?php endif; ?>
+                        <?php if (!empty($site['contact_phone'])): ?>
+                            <p><i class="fas fa-phone mr-2" style="color: <?php echo $accentColor; ?>;"></i><?php echo htmlspecialchars($site['contact_phone']); ?></p>
+                        <?php endif; ?>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="py-8 px-4 text-center" style="background: <?php echo $secondaryColor; ?>;">
+            <p class="text-white font-bold mb-2">🛒 <?php echo htmlspecialchars($siteName); ?></p>
+            <p class="text-white/60 text-xs">&copy; <?php echo date('Y'); ?> All rights reserved. Powered by FilDevStudio</p>
+        </footer>
+    </div>
+
+    <?php elseif ($templateId == 12): // ========== SARI-SARI STORE ========== ?>
+    <div class="min-h-screen" style="background: linear-gradient(180deg, <?php echo $primaryColor; ?>, <?php echo $accentColor; ?>);">
+        <!-- Header -->
+        <nav class="sticky top-8 z-50" style="background: <?php echo $primaryColor; ?>;">
+            <div class="max-w-6xl mx-auto px-4 md:px-8 py-4 flex justify-between items-center">
+                <div class="text-xl md:text-2xl font-bold text-white flex items-center gap-2">
+                    🏪 <?php echo htmlspecialchars($siteName); ?>
+                </div>
+                <span class="px-3 py-1 rounded-full text-sm font-bold" style="background: white; color: <?php echo $primaryColor; ?>;">
+                    BUKAS NA! 🎉
+                </span>
+            </div>
+        </nav>
+
+        <!-- Hero -->
+        <section id="home" class="py-10 md:py-16 px-4">
+            <div class="max-w-4xl mx-auto">
+                <div class="bg-white rounded-2xl p-6 md:p-10 text-center shadow-xl">
+                    <p class="inline-block px-4 py-1 rounded-full text-sm mb-4" style="background: <?php echo $primaryColor; ?>15; color: <?php echo $primaryColor; ?>;">📦 TINGI PRICES - MURA NA!</p>
+                    <h1 class="text-3xl md:text-4xl font-bold mb-4" style="color: <?php echo $secondaryColor; ?>;"><?php echo htmlspecialchars($heroTitle); ?></h1>
+                    <p class="text-gray-600 text-lg mb-6"><?php echo htmlspecialchars($heroSubtitle); ?></p>
+                    
+                    <!-- Services Icons -->
+                    <div class="flex flex-wrap justify-center gap-4 mb-6">
+                        <div class="px-4 py-2 rounded-full flex items-center gap-2 text-sm font-medium" style="background: <?php echo $primaryColor; ?>10; color: <?php echo $primaryColor; ?>;">
+                            📱 E-Load Available
+                        </div>
+                        <div class="px-4 py-2 rounded-full flex items-center gap-2 text-sm font-medium bg-blue-50 text-blue-600">
+                            💳 GCash Accepted
+                        </div>
+                        <div class="px-4 py-2 rounded-full flex items-center gap-2 text-sm font-medium bg-green-50 text-green-600">
+                            📶 Piso WiFi
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- About -->
+        <section id="about" class="py-12 px-4 md:px-8">
+            <div class="max-w-4xl mx-auto bg-white/95 backdrop-blur rounded-2xl p-6 md:p-8 text-center">
+                <h2 class="text-2xl font-bold mb-4" style="color: <?php echo $primaryColor; ?>;">Tungkol Sa Amin</h2>
+                <div class="w-16 h-1 mx-auto rounded mb-6" style="background: <?php echo $accentColor; ?>;"></div>
+                <p class="text-gray-600 leading-relaxed"><?php echo nl2br(htmlspecialchars($aboutContent)); ?></p>
+            </div>
+        </section>
+
+        <!-- Services/Products -->
+        <section id="services" class="py-12 px-4 md:px-8">
+            <div class="max-w-6xl mx-auto">
+                <h2 class="text-2xl font-bold text-white text-center mb-8">Mga Paninda Namin</h2>
+                
+                <?php if (!empty($servicesContent)): ?>
+                    <div class="bg-white/95 rounded-2xl p-6 text-center text-gray-600 leading-relaxed"><?php echo nl2br(htmlspecialchars($servicesContent)); ?></div>
+                <?php else: ?>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <?php 
+                        $products = [
+                            ['emoji' => '🍬', 'title' => 'Candy & Snacks', 'price' => '₱1 - ₱20'],
+                            ['emoji' => '🥤', 'title' => 'Softdrinks', 'price' => '₱15 - ₱35'],
+                            ['emoji' => '🧴', 'title' => 'Sachet Items', 'price' => '₱5 - ₱15'],
+                            ['emoji' => '🍜', 'title' => 'Instant Noodles', 'price' => '₱12 - ₱25'],
+                            ['emoji' => '📱', 'title' => 'E-Load All Networks', 'price' => '₱10 - ₱500'],
+                            ['emoji' => '🍞', 'title' => 'Bread & Pandesal', 'price' => '₱3 - ₱15'],
+                            ['emoji' => '🧊', 'title' => 'Ice & Cold Drinks', 'price' => '₱5 - ₱25'],
+                            ['emoji' => '🥚', 'title' => 'Eggs (Tingi)', 'price' => '₱8/piraso'],
+                        ];
+                        foreach($products as $product): ?>
+                        <div class="bg-white/95 backdrop-blur p-4 rounded-xl text-center">
+                            <p class="text-3xl mb-2"><?php echo $product['emoji']; ?></p>
+                            <p class="font-medium text-gray-800 text-sm"><?php echo $product['title']; ?></p>
+                            <p class="font-bold text-sm" style="color: <?php echo $primaryColor; ?>;"><?php echo $product['price']; ?></p>
+                        </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </section>
+
+        <!-- Contact -->
+        <section id="contact" class="py-12 px-4 md:px-8">
+            <div class="max-w-4xl mx-auto bg-white rounded-2xl p-6 md:p-8 text-center shadow-xl">
+                <h2 class="text-2xl font-bold mb-4" style="color: <?php echo $primaryColor; ?>;">Bisitahin Kami!</h2>
+                <div class="w-16 h-1 mx-auto rounded mb-6" style="background: <?php echo $accentColor; ?>;"></div>
+                
+                <?php if (!empty($contactInfo)): ?>
+                    <p class="text-gray-600 whitespace-pre-line"><?php echo htmlspecialchars($contactInfo); ?></p>
+                <?php else: ?>
+                    <div class="space-y-3 text-gray-600">
+                        <?php if (!empty($site['address'])): ?>
+                            <p><i class="fas fa-map-marker-alt mr-2" style="color: <?php echo $primaryColor; ?>;"></i><?php echo htmlspecialchars($site['address']); ?></p>
+                        <?php endif; ?>
+                        <?php if (!empty($site['contact_phone'])): ?>
+                            <p><i class="fas fa-phone mr-2" style="color: <?php echo $primaryColor; ?>;"></i><?php echo htmlspecialchars($site['contact_phone']); ?></p>
+                        <?php endif; ?>
+                        <p class="text-sm pt-4" style="color: <?php echo $primaryColor; ?>;">⏰ Bukas: 6AM - 10PM Daily</p>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="py-8 px-4 text-center" style="background: <?php echo $secondaryColor; ?>;">
+            <p class="text-white font-bold mb-2">🏪 <?php echo htmlspecialchars($siteName); ?></p>
+            <p class="text-white/60 text-xs">&copy; <?php echo date('Y'); ?> Lahat ng karapatan ay nakalaan. Powered by FilDevStudio</p>
+        </footer>
+    </div>
+
+    <?php elseif ($templateId == 13): // ========== SARI-SARI PLUS (Modern) ========== ?>
+    <div class="min-h-screen bg-white">
+        <!-- Header -->
+        <nav class="sticky top-8 z-50 shadow-sm" style="background: <?php echo $primaryColor; ?>;">
+            <div class="max-w-6xl mx-auto px-4 md:px-8 py-4 flex justify-between items-center">
+                <div class="text-xl md:text-2xl font-bold text-white flex items-center gap-2">
+                    🛒 <?php echo htmlspecialchars($siteName); ?>
+                </div>
+                <div class="hidden md:flex space-x-6 text-sm text-white/80">
+                    <a href="#home" class="hover:text-white">Home</a>
+                    <a href="#about" class="hover:text-white">About</a>
+                    <a href="#services" class="hover:text-white">Products</a>
+                    <a href="#contact" class="hover:text-white">Contact</a>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span class="text-white text-sm hidden md:block"><i class="fas fa-motorcycle mr-1"></i> We Deliver!</span>
+                    <span class="px-3 py-1 rounded-full text-xs font-bold bg-white" style="color: <?php echo $primaryColor; ?>;">ORDER NOW</span>
+                </div>
+            </div>
+            <div class="border-t border-white/10">
+                <div class="max-w-6xl mx-auto px-4 py-2 flex justify-center space-x-6 text-xs text-white/70">
+                    <span>🛍️ Groceries</span><span>📱 E-Load</span><span>💳 Bills Payment</span><span>🚚 Delivery</span>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Hero -->
+        <section id="home" class="py-12 md:py-16 px-4 text-center" style="background: linear-gradient(135deg, <?php echo $primaryColor; ?>15, <?php echo $accentColor; ?>15);">
+            <div class="max-w-4xl mx-auto">
+                <div class="flex flex-wrap justify-center gap-2 mb-6">
+                    <span class="px-3 py-1 rounded-full text-xs font-medium" style="background: <?php echo $primaryColor; ?>15; color: <?php echo $primaryColor; ?>;">💳 GCash</span>
+                    <span class="px-3 py-1 rounded-full text-xs font-medium" style="background: <?php echo $accentColor; ?>15; color: <?php echo $accentColor; ?>;">🚚 Delivery</span>
+                    <span class="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-600">⏰ 24/7</span>
+                </div>
+                <h1 class="text-3xl md:text-5xl font-bold mb-4" style="color: <?php echo $secondaryColor; ?>;"><?php echo htmlspecialchars($heroTitle); ?></h1>
+                <p class="text-gray-600 text-lg mb-8 max-w-xl mx-auto"><?php echo htmlspecialchars($heroSubtitle); ?></p>
+                <div class="flex flex-wrap justify-center gap-4">
+                    <a href="#services" class="px-8 py-3 text-white font-semibold rounded-lg hover:opacity-90 transition" style="background: <?php echo $primaryColor; ?>;">
+                        <i class="fas fa-shopping-bag mr-2"></i>Shop Now
+                    </a>
+                    <a href="#contact" class="px-8 py-3 font-semibold rounded-lg border-2 hover:bg-gray-50 transition" style="border-color: <?php echo $primaryColor; ?>; color: <?php echo $primaryColor; ?>;">
+                        <i class="fas fa-motorcycle mr-2"></i>Order Delivery
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- About -->
+        <section id="about" class="py-16 px-4 md:px-8 bg-gray-50">
+            <div class="max-w-4xl mx-auto text-center">
+                <h2 class="text-2xl font-bold mb-4" style="color: <?php echo $primaryColor; ?>;">About Us</h2>
+                <div class="w-16 h-1 mx-auto rounded mb-8" style="background: <?php echo $accentColor; ?>;"></div>
+                <p class="text-gray-600 leading-relaxed"><?php echo nl2br(htmlspecialchars($aboutContent)); ?></p>
+            </div>
+        </section>
+
+        <!-- Services/Products -->
+        <section id="services" class="py-16 px-4 md:px-8">
+            <div class="max-w-6xl mx-auto">
+                <h2 class="text-2xl font-bold text-center mb-12" style="color: <?php echo $primaryColor; ?>;">Our Products & Services</h2>
+                
+                <?php if (!empty($servicesContent)): ?>
+                    <div class="max-w-3xl mx-auto text-center text-gray-600 leading-relaxed"><?php echo nl2br(htmlspecialchars($servicesContent)); ?></div>
+                <?php else: ?>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <?php 
+                        $services = [
+                            ['icon' => 'fa-shopping-basket', 'title' => 'Groceries', 'desc' => 'Daily essentials'],
+                            ['icon' => 'fa-mobile-alt', 'title' => 'E-Load', 'desc' => 'All networks'],
+                            ['icon' => 'fa-file-invoice-dollar', 'title' => 'Bills Payment', 'desc' => 'Bayad Center'],
+                            ['icon' => 'fa-motorcycle', 'title' => 'Delivery', 'desc' => 'Within 2km'],
+                        ];
+                        foreach($services as $service): ?>
+                        <div class="p-6 rounded-xl text-center hover:shadow-md transition" style="background: <?php echo $primaryColor; ?>08;">
+                            <div class="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3" style="background: <?php echo $primaryColor; ?>;">
+                                <i class="fas <?php echo $service['icon']; ?> text-white"></i>
+                            </div>
+                            <p class="font-bold text-gray-800"><?php echo $service['title']; ?></p>
+                            <p class="text-sm text-gray-500"><?php echo $service['desc']; ?></p>
+                        </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </section>
+
+        <!-- Contact -->
+        <section id="contact" class="py-16 px-4 md:px-8" style="background: <?php echo $primaryColor; ?>;">
+            <div class="max-w-4xl mx-auto text-center">
+                <h2 class="text-2xl font-bold text-white mb-6">Order or Visit Us</h2>
+                <div class="w-16 h-1 mx-auto rounded mb-8" style="background: <?php echo $accentColor; ?>;"></div>
+                
+                <?php if (!empty($contactInfo)): ?>
+                    <p class="text-white/80 whitespace-pre-line"><?php echo htmlspecialchars($contactInfo); ?></p>
+                <?php else: ?>
+                    <div class="flex flex-wrap justify-center gap-6 text-white/80 mb-6">
+                        <?php if (!empty($site['contact_phone'])): ?>
+                            <p><i class="fas fa-phone mr-2" style="color: <?php echo $accentColor; ?>;"></i><?php echo htmlspecialchars($site['contact_phone']); ?></p>
+                        <?php endif; ?>
+                        <?php if (!empty($site['contact_email'])): ?>
+                            <p><i class="fas fa-envelope mr-2" style="color: <?php echo $accentColor; ?>;"></i><?php echo htmlspecialchars($site['contact_email']); ?></p>
+                        <?php endif; ?>
+                    </div>
+                    <p class="text-white/60 text-sm">💬 Message us on Facebook or Viber for orders!</p>
+                <?php endif; ?>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="py-8 px-4 text-center" style="background: <?php echo $secondaryColor; ?>;">
+            <p class="text-white font-bold mb-2">🛒 <?php echo htmlspecialchars($siteName); ?></p>
+            <p class="text-white/60 text-xs">&copy; <?php echo date('Y'); ?> All rights reserved. Powered by FilDevStudio</p>
+        </footer>
+    </div>
+
     <?php else: // ========== DEFAULT / GENERAL BUSINESS (Template 5, 6, or fallback) ========== ?>
     <div class="min-h-screen bg-white">
         <!-- Header -->

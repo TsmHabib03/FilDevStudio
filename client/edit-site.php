@@ -95,6 +95,46 @@ $templateHints = [
         'services' => 'Key features, pricing tiers, or solutions',
         'servicesLabel' => 'Features & Solutions',
         'icon' => 'fa-rocket'
+    ],
+    9 => [ // Boutique Shop
+        'heroTitle' => 'e.g., "Spring Collection 2024" or "Discover Elegance"',
+        'heroSubtitle' => 'A soft, elegant tagline for your boutique brand',
+        'about' => 'Your brand story - craftsmanship, inspiration, and style philosophy',
+        'services' => 'Featured products, new arrivals, or seasonal collections',
+        'servicesLabel' => 'Collections & Products',
+        'icon' => 'fa-gem'
+    ],
+    10 => [ // Electronics Store
+        'heroTitle' => 'e.g., "Latest Tech, Best Prices" or "Gadget Heaven"',
+        'heroSubtitle' => 'Highlight deals, warranties, or exclusive offers',
+        'about' => 'Why buy from you - authenticity, warranty, after-sales support',
+        'services' => 'Featured gadgets, categories, or bestselling products',
+        'servicesLabel' => 'Featured Products',
+        'icon' => 'fa-microchip'
+    ],
+    11 => [ // Grocery & Supermarket
+        'heroTitle' => 'e.g., "Fresh Daily!" or "Quality Groceries"',
+        'heroSubtitle' => 'Highlight freshness, prices, or delivery options',
+        'about' => 'Your store story - family-owned, fresh sourcing, community focus',
+        'services' => 'Product categories, weekly deals, or delivery info',
+        'servicesLabel' => 'Products & Deals',
+        'icon' => 'fa-shopping-basket'
+    ],
+    12 => [ // Sari-Sari Store
+        'heroTitle' => 'e.g., "Tindahan ng Bayan" or "Mura at Matibay"',
+        'heroSubtitle' => 'Your tagline - tingi prices, services offered',
+        'about' => 'Your sari-sari story - barangay location, years serving, etc.',
+        'services' => 'Products available: snacks, drinks, e-load, sachet items',
+        'servicesLabel' => 'Mga Paninda',
+        'icon' => 'fa-store-alt'
+    ],
+    13 => [ // Sari-Sari Plus
+        'heroTitle' => 'e.g., "Modern Convenience Store" or "Order Online!"',
+        'heroSubtitle' => 'Highlight delivery, GCash, or 24/7 service',
+        'about' => 'Your modern sari-sari concept - delivery, digital payments',
+        'services' => 'Services: groceries, e-load, bills payment, delivery',
+        'servicesLabel' => 'Products & Services',
+        'icon' => 'fa-motorcycle'
     ]
 ];
 

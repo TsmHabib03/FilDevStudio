@@ -19,20 +19,37 @@ try {
 // If no database, use sample data
 if (empty($templates)) {
     $templates = [
-        ['id' => 1, 'name' => 'Modern Retail', 'category' => 'retail', 'description' => 'Clean template for retail stores and shops with product showcase', 'preview_image' => 'assets/images/templates/retail.jpg', 'features' => ['Product Grid', 'Cart Ready', 'Mobile First']],
-        ['id' => 2, 'name' => 'Restaurant Pro', 'category' => 'food', 'description' => 'Perfect for restaurants, cafes, and food businesses', 'preview_image' => 'assets/images/templates/food.jpg', 'features' => ['Menu Display', 'Reservations', 'Gallery']],
-        ['id' => 3, 'name' => 'Freelancer Portfolio', 'category' => 'freelance', 'description' => 'Professional portfolio for freelancers and creatives', 'preview_image' => 'assets/images/templates/freelance.jpg', 'features' => ['Project Gallery', 'Skills Section', 'Contact Form']],
-        ['id' => 4, 'name' => 'Service Business', 'category' => 'services', 'description' => 'Template for service-based businesses', 'preview_image' => 'assets/images/templates/services.jpg', 'features' => ['Service List', 'Testimonials', 'Booking']],
+        // Retail Templates
+        ['id' => 1, 'name' => 'Modern Retail', 'category' => 'retail', 'description' => 'Elegant, minimal design for luxury retail stores and boutiques', 'preview_image' => 'assets/images/templates/retail.jpg', 'features' => ['Product Grid', 'Cart Ready', 'Mobile First']],
+        ['id' => 6, 'name' => 'E-Commerce Starter', 'category' => 'retail', 'description' => 'Start selling online with this conversion-optimized template', 'preview_image' => 'assets/images/templates/ecommerce.jpg', 'features' => ['Product Pages', 'Checkout Flow', 'Inventory']],
+        ['id' => 7, 'name' => 'Urban Streetwear', 'category' => 'retail', 'description' => 'Edgy and bold design for fashion and streetwear brands', 'preview_image' => 'assets/images/templates/streetwear.jpg', 'features' => ['Lookbook Style', 'Instagram Feed', 'Dark Theme']],
+        ['id' => 9, 'name' => 'Boutique Shop', 'category' => 'retail', 'description' => 'Feminine and elegant design for boutiques and gift shops', 'preview_image' => 'assets/images/templates/boutique.jpg', 'features' => ['Soft Aesthetics', 'Product Showcase', 'Newsletter']],
+        ['id' => 10, 'name' => 'Electronics Store', 'category' => 'retail', 'description' => 'Modern tech-focused design for gadget and electronics stores', 'preview_image' => 'assets/images/templates/electronics.jpg', 'features' => ['Spec Display', 'Compare Products', 'Tech Style']],
+        ['id' => 11, 'name' => 'Grocery & Supermarket', 'category' => 'retail', 'description' => 'Clean organized layout for grocery stores and supermarkets', 'preview_image' => 'assets/images/templates/grocery.jpg', 'features' => ['Category Grid', 'Weekly Deals', 'Store Locator']],
+        
+        // Sari-Sari Store (Filipino convenience store)
+        ['id' => 12, 'name' => 'Sari-Sari Store', 'category' => 'sarisari', 'description' => 'Colorful, friendly template for neighborhood sari-sari stores', 'preview_image' => 'assets/images/templates/sarisari.jpg', 'features' => ['Tingi Prices', 'Load & Bills', 'Promo Display']],
+        ['id' => 13, 'name' => 'Sari-Sari Plus', 'category' => 'sarisari', 'description' => 'Modern sari-sari store with online ordering features', 'preview_image' => 'assets/images/templates/sarisari2.jpg', 'features' => ['Order Online', 'Delivery Info', 'GCash Ready']],
+        
+        // Food Templates
+        ['id' => 2, 'name' => 'Restaurant Pro', 'category' => 'food', 'description' => 'Warm, appetizing design for restaurants and cafes', 'preview_image' => 'assets/images/templates/food.jpg', 'features' => ['Menu Display', 'Reservations', 'Gallery']],
+        
+        // Freelance Templates
+        ['id' => 3, 'name' => 'Freelancer Portfolio', 'category' => 'freelance', 'description' => 'Creative portfolio for designers and developers', 'preview_image' => 'assets/images/templates/freelance.jpg', 'features' => ['Project Gallery', 'Skills Section', 'Contact Form']],
+        
+        // Service Templates
+        ['id' => 4, 'name' => 'Service Business', 'category' => 'services', 'description' => 'Professional design for service-based businesses', 'preview_image' => 'assets/images/templates/services.jpg', 'features' => ['Service List', 'Testimonials', 'Booking']],
+        
+        // General Templates
         ['id' => 5, 'name' => 'General Business', 'category' => 'general', 'description' => 'Versatile template for any business type', 'preview_image' => 'assets/images/templates/general.jpg', 'features' => ['Flexible Sections', 'Multi-purpose', 'SEO Ready']],
-        ['id' => 6, 'name' => 'E-Commerce Starter', 'category' => 'retail', 'description' => 'Start selling online with this e-commerce template', 'preview_image' => 'assets/images/templates/ecommerce.jpg', 'features' => ['Product Pages', 'Checkout Flow', 'Inventory']],
-        ['id' => 7, 'name' => 'Urban Streetwear', 'category' => 'retail', 'description' => 'Edgy and modern design for fashion brands', 'preview_image' => 'assets/images/templates/streetwear.jpg', 'features' => ['Lookbook Style', 'Instagram Feed', 'Dark Theme']],
-        ['id' => 8, 'name' => 'Tech Startup', 'category' => 'general', 'description' => 'Clean, minimal, and trustworthy design for tech companies', 'preview_image' => 'assets/images/templates/tech.jpg', 'features' => ['SaaS Features', 'Pricing Tables', 'Integration Logos']],
+        ['id' => 8, 'name' => 'Tech Startup', 'category' => 'general', 'description' => 'Clean, modern SaaS landing page design', 'preview_image' => 'assets/images/templates/tech.jpg', 'features' => ['SaaS Features', 'Pricing Tables', 'Integration Logos']],
     ];
 }
 
 $categories = [
     'all' => ['label' => 'All Templates', 'icon' => 'fas fa-th-large', 'count' => count($templates)],
     'retail' => ['label' => 'Retail & Shop', 'icon' => 'fas fa-shopping-bag', 'count' => 0],
+    'sarisari' => ['label' => 'Sari-Sari Store', 'icon' => 'fas fa-store-alt', 'count' => 0],
     'food' => ['label' => 'Food & Restaurant', 'icon' => 'fas fa-utensils', 'count' => 0],
     'freelance' => ['label' => 'Freelance & Portfolio', 'icon' => 'fas fa-briefcase', 'count' => 0],
     'services' => ['label' => 'Service Business', 'icon' => 'fas fa-cogs', 'count' => 0],
@@ -48,6 +65,7 @@ foreach ($templates as $t) {
 
 $categoryIcons = [
     'retail' => 'fas fa-shopping-bag',
+    'sarisari' => 'fas fa-store-alt',
     'food' => 'fas fa-utensils',
     'freelance' => 'fas fa-briefcase',
     'services' => 'fas fa-cogs',
@@ -56,6 +74,7 @@ $categoryIcons = [
 
 $categoryColors = [
     'retail' => 'from-primary-500 to-primary-600',
+    'sarisari' => 'from-yellow-500 to-orange-500',
     'food' => 'from-orange-500 to-red-500',
     'freelance' => 'from-accent-500 to-purple-600',
     'services' => 'from-secondary-500 to-teal-600',

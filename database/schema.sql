@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS business_profiles (
 CREATE TABLE IF NOT EXISTS templates (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
-    category ENUM('retail', 'food', 'freelance', 'services', 'general') NOT NULL,
+    category ENUM('retail', 'food', 'freelance', 'services', 'general', 'sarisari') NOT NULL,
     description TEXT,
     preview_image VARCHAR(255) NOT NULL,
     folder_path VARCHAR(255) NOT NULL,
@@ -126,4 +126,12 @@ INSERT INTO templates (name, category, description, preview_image, folder_path) 
 ('Food & Restaurant', 'food', 'Appetizing design for restaurants, cafes, and food businesses', 'assets/templates/food-restaurant.jpg', 'templates/food-restaurant'),
 ('Freelancer Portfolio', 'freelance', 'Professional portfolio template for freelancers and creatives', 'assets/templates/freelancer-portfolio.jpg', 'templates/freelancer-portfolio'),
 ('Service Business', 'services', 'Professional template for service-based businesses', 'assets/templates/service-business.jpg', 'templates/service-business'),
-('General Business', 'general', 'Versatile template suitable for any business type', 'assets/templates/general-business.jpg', 'templates/general-business');
+('General Business', 'general', 'Versatile template suitable for any business type', 'assets/templates/general-business.jpg', 'templates/general-business'),
+('E-Commerce Starter', 'retail', 'Simple online store template with product showcase', 'assets/templates/ecommerce-starter.jpg', 'templates/ecommerce-starter'),
+('Urban Streetwear', 'retail', 'Bold streetwear brand template with dark aesthetic', 'assets/templates/urban-streetwear.jpg', 'templates/urban-streetwear'),
+('Tech Startup', 'services', 'Modern SaaS/startup template with gradient design', 'assets/templates/tech-startup.jpg', 'templates/tech-startup'),
+('Boutique Shop', 'retail', 'Elegant feminine template for fashion boutiques', 'assets/templates/boutique-shop.jpg', 'templates/boutique-shop'),
+('Electronics Store', 'retail', 'Dark tech-focused template for gadget shops', 'assets/templates/electronics-store.jpg', 'templates/electronics-store'),
+('Grocery & Supermarket', 'retail', 'Fresh green template for grocery stores', 'assets/templates/grocery-supermarket.jpg', 'templates/grocery-supermarket'),
+('Sari-Sari Store', 'sarisari', 'Colorful Filipino neighborhood store template with tingi prices', 'assets/templates/sari-sari-store.jpg', 'templates/sari-sari-store'),
+('Sari-Sari Plus', 'sarisari', 'Modern sari-sari with delivery and digital payments', 'assets/templates/sari-sari-plus.jpg', 'templates/sari-sari-plus');

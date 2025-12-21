@@ -146,6 +146,51 @@ $templateConfigs = [
         'heroHint' => 'e.g., "Build Faster, Scale Smarter"',
         'subtitleHint' => 'Explain your product value in one line',
         'style' => 'Modern gradients, SaaS style'
+    ],
+    9 => [
+        'name' => 'Boutique Shop',
+        'primary' => '#BE185D',
+        'secondary' => '#9D174D',
+        'accent' => '#F472B6',
+        'heroHint' => 'e.g., "Discover Your Perfect Style"',
+        'subtitleHint' => 'Curated pieces for the modern woman',
+        'style' => 'Feminine, elegant boutique design'
+    ],
+    10 => [
+        'name' => 'Electronics Store',
+        'primary' => '#0F172A',
+        'secondary' => '#1E293B',
+        'accent' => '#22D3EE',
+        'heroHint' => 'e.g., "Latest Tech Deals"',
+        'subtitleHint' => 'Newest gadgets at unbeatable prices',
+        'style' => 'Tech-focused, modern dark theme'
+    ],
+    11 => [
+        'name' => 'Grocery & Supermarket',
+        'primary' => '#15803D',
+        'secondary' => '#166534',
+        'accent' => '#FDE047',
+        'heroHint' => 'e.g., "Fresh & Healthy Everyday"',
+        'subtitleHint' => 'Quality groceries delivered to you',
+        'style' => 'Clean, organized grocery layout'
+    ],
+    12 => [
+        'name' => 'Sari-Sari Store',
+        'primary' => '#EA580C',
+        'secondary' => '#C2410C',
+        'accent' => '#FACC15',
+        'heroHint' => 'e.g., "Malapit, Mura, at Kumpleto!"',
+        'subtitleHint' => 'Your neighborhood one-stop shop',
+        'style' => 'Colorful, friendly Filipino store'
+    ],
+    13 => [
+        'name' => 'Sari-Sari Plus',
+        'primary' => '#0891B2',
+        'secondary' => '#0E7490',
+        'accent' => '#F97316',
+        'heroHint' => 'e.g., "Your Neighborhood Store, Now Online!"',
+        'subtitleHint' => 'Order groceries, load, and more',
+        'style' => 'Modern sari-sari with online ordering'
     ]
 ];
 
@@ -295,6 +340,160 @@ require_once '../includes/header.php';
                             <div class="mx-4 mb-4 rounded-lg p-3 bg-gray-800">
                                 <div class="h-16 bg-gray-700 rounded flex items-center justify-center">
                                     <i class="fas fa-chart-line" style="color: <?php echo $config['primary']; ?>;"></i>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <?php elseif ($templateId == 9): // Boutique Shop ?>
+                        <div style="background: <?php echo $config['primary']; ?>05;">
+                            <div class="py-3 px-4 flex justify-between items-center bg-white border-b">
+                                <span class="text-sm font-light tracking-widest" id="previewName" style="color: <?php echo $config['primary']; ?>;">BOUTIQUE</span>
+                                <div class="flex gap-3 text-gray-400 text-xs">
+                                    <i class="fas fa-search"></i>
+                                    <i class="fas fa-heart"></i>
+                                    <i class="fas fa-shopping-bag"></i>
+                                </div>
+                            </div>
+                            <div class="h-28 flex items-center justify-center text-center relative" style="background: linear-gradient(135deg, <?php echo $config['primary']; ?>15, <?php echo $config['accent']; ?>10);">
+                                <div>
+                                    <p class="text-xs tracking-widest mb-1" style="color: <?php echo $config['primary']; ?>;">✦ NEW COLLECTION ✦</p>
+                                    <h4 class="text-lg font-light tracking-wide" id="previewHero" style="color: <?php echo $config['secondary']; ?>;">Spring Arrivals</h4>
+                                    <p class="text-xs mt-1 opacity-70" id="previewSubtitle">Discover elegance</p>
+                                </div>
+                            </div>
+                            <div class="p-3 grid grid-cols-2 gap-2">
+                                <div class="bg-white p-2 rounded text-center">
+                                    <div class="w-full h-10 bg-pink-50 rounded mb-1 flex items-center justify-center">
+                                        <i class="fas fa-tshirt text-pink-300"></i>
+                                    </div>
+                                    <p class="text-xs font-medium">₱1,299</p>
+                                </div>
+                                <div class="bg-white p-2 rounded text-center">
+                                    <div class="w-full h-10 bg-pink-50 rounded mb-1 flex items-center justify-center">
+                                        <i class="fas fa-gem text-pink-300"></i>
+                                    </div>
+                                    <p class="text-xs font-medium">₱899</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <?php elseif ($templateId == 10): // Electronics Store ?>
+                        <div style="background: <?php echo $config['primary']; ?>;">
+                            <div class="py-3 px-4 flex justify-between items-center border-b border-white/10">
+                                <span class="text-white text-sm font-bold tracking-tight" id="previewName">TECHZONE</span>
+                                <div class="flex gap-3 text-gray-400 text-xs">
+                                    <i class="fas fa-search"></i>
+                                    <i class="fas fa-shopping-cart"></i>
+                                </div>
+                            </div>
+                            <div class="py-2 px-4 text-xs flex justify-center gap-4 text-gray-400 border-b border-white/5">
+                                <span>Phones</span><span>Laptops</span><span>Audio</span>
+                            </div>
+                            <div class="h-24 flex items-center justify-center text-center px-4" style="background: linear-gradient(135deg, <?php echo $config['secondary']; ?>, <?php echo $config['primary']; ?>);">
+                                <div>
+                                    <p class="text-xs mb-1" style="color: <?php echo $config['accent']; ?>;">🔥 HOT DEALS</p>
+                                    <h4 class="text-lg font-bold text-white" id="previewHero">Tech Deals</h4>
+                                    <p class="text-xs text-gray-400" id="previewSubtitle">Up to 50% OFF</p>
+                                </div>
+                            </div>
+                            <div class="p-3 bg-gray-900/50">
+                                <div class="bg-gray-800 rounded p-2 flex items-center gap-2">
+                                    <div class="w-10 h-10 bg-gray-700 rounded flex items-center justify-center">
+                                        <i class="fas fa-mobile-alt" style="color: <?php echo $config['accent']; ?>;"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="text-xs text-white">Smartphone Pro</p>
+                                        <p class="text-xs" style="color: <?php echo $config['accent']; ?>;">₱24,999</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <?php elseif ($templateId == 11): // Grocery & Supermarket ?>
+                        <div class="bg-white">
+                            <div class="py-3 px-4 flex justify-between items-center" style="background: <?php echo $config['primary']; ?>;">
+                                <span class="text-white text-sm font-bold" id="previewName">🛒 FreshMart</span>
+                                <div class="flex gap-3 text-white/70 text-xs">
+                                    <i class="fas fa-search"></i>
+                                    <i class="fas fa-shopping-basket"></i>
+                                </div>
+                            </div>
+                            <div class="py-2 px-3 text-xs flex justify-center gap-3 bg-green-50 border-b">
+                                <span class="text-green-600">🥬 Fresh</span>
+                                <span class="text-green-600">🥩 Meat</span>
+                                <span class="text-green-600">🍞 Bakery</span>
+                            </div>
+                            <div class="h-20 flex items-center justify-center text-center" style="background: linear-gradient(135deg, <?php echo $config['primary']; ?>20, <?php echo $config['accent']; ?>20);">
+                                <div>
+                                    <h4 class="text-base font-bold" id="previewHero" style="color: <?php echo $config['secondary']; ?>;">Fresh Daily!</h4>
+                                    <p class="text-xs text-gray-500" id="previewSubtitle">Quality groceries delivered</p>
+                                </div>
+                            </div>
+                            <div class="p-2 grid grid-cols-3 gap-1">
+                                <div class="bg-green-50 p-1 rounded text-center">
+                                    <p class="text-lg">🍎</p>
+                                    <p class="text-xs" style="color: <?php echo $config['primary']; ?>;">₱99</p>
+                                </div>
+                                <div class="bg-yellow-50 p-1 rounded text-center">
+                                    <p class="text-lg">🥕</p>
+                                    <p class="text-xs" style="color: <?php echo $config['primary']; ?>;">₱45</p>
+                                </div>
+                                <div class="bg-orange-50 p-1 rounded text-center">
+                                    <p class="text-lg">🍞</p>
+                                    <p class="text-xs" style="color: <?php echo $config['primary']; ?>;">₱65</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <?php elseif ($templateId == 12): // Sari-Sari Store ?>
+                        <div style="background: linear-gradient(180deg, <?php echo $config['primary']; ?>, <?php echo $config['accent']; ?>);">
+                            <div class="py-3 px-4 flex justify-between items-center">
+                                <span class="text-white text-sm font-bold" id="previewName">🏪 Aling Nena's</span>
+                                <span class="text-xs px-2 py-0.5 bg-white/20 rounded-full text-white">BUKAS NA!</span>
+                            </div>
+                            <div class="mx-3 mb-2 p-3 rounded-lg text-center" style="background: rgba(255,255,255,0.95);">
+                                <p class="text-xs text-orange-600 mb-1">📦 Tingi Prices!</p>
+                                <h4 class="text-sm font-bold" id="previewHero" style="color: <?php echo $config['secondary']; ?>;">Sari-Sari Store</h4>
+                                <p class="text-xs text-gray-500" id="previewSubtitle">Tindahan ng bayan</p>
+                            </div>
+                            <div class="px-3 pb-3 grid grid-cols-3 gap-1">
+                                <div class="bg-white/90 p-1 rounded text-center">
+                                    <p class="text-xs">📱</p>
+                                    <p class="text-xs font-bold text-orange-600">E-Load</p>
+                                </div>
+                                <div class="bg-white/90 p-1 rounded text-center">
+                                    <p class="text-xs">💳</p>
+                                    <p class="text-xs font-bold text-blue-600">GCash</p>
+                                </div>
+                                <div class="bg-white/90 p-1 rounded text-center">
+                                    <p class="text-xs">📶</p>
+                                    <p class="text-xs font-bold text-green-600">WiFi</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <?php elseif ($templateId == 13): // Sari-Sari Plus ?>
+                        <div class="bg-white">
+                            <div class="py-3 px-4 flex justify-between items-center" style="background: <?php echo $config['primary']; ?>;">
+                                <span class="text-white text-sm font-bold" id="previewName">🛒 Store Plus</span>
+                                <span class="text-white text-xs"><i class="fas fa-motorcycle"></i></span>
+                            </div>
+                            <div class="py-2 px-3 text-xs flex justify-between bg-cyan-50 border-b">
+                                <span style="color: <?php echo $config['primary']; ?>;">🛍️ Grocery</span>
+                                <span style="color: <?php echo $config['primary']; ?>;">📱 E-Load</span>
+                                <span style="color: <?php echo $config['primary']; ?>;">🚚 Deliver</span>
+                            </div>
+                            <div class="h-20 flex items-center justify-center text-center" style="background: linear-gradient(135deg, <?php echo $config['primary']; ?>15, <?php echo $config['accent']; ?>15);">
+                                <div>
+                                    <h4 class="text-base font-bold" id="previewHero" style="color: <?php echo $config['secondary']; ?>;">Modern Sari-Sari</h4>
+                                    <p class="text-xs text-gray-500" id="previewSubtitle">Order online, deliver fast!</p>
+                                </div>
+                            </div>
+                            <div class="p-2">
+                                <div class="flex gap-2 text-xs">
+                                    <span class="px-2 py-1 rounded-full" style="background: <?php echo $config['primary']; ?>15; color: <?php echo $config['primary']; ?>;">GCash</span>
+                                    <span class="px-2 py-1 rounded-full" style="background: <?php echo $config['accent']; ?>15; color: <?php echo $config['accent']; ?>;">Delivery</span>
+                                    <span class="px-2 py-1 rounded-full bg-green-100 text-green-600">24/7</span>
                                 </div>
                             </div>
                         </div>
