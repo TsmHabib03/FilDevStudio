@@ -97,12 +97,14 @@ try {
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-200">
-                        <?php foreach ($templates as $template): ?>
+                        <?php foreach ($templates as $template): 
+                            $placeholder = getTemplatePlaceholder($template['id'], $template['category']);
+                        ?>
                             <tr class="hover:bg-gray-50">
                                 <td class="px-6 py-4">
                                     <div class="flex items-center space-x-3">
-                                        <div class="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center">
-                                            <i class="fas fa-file-code text-gray-400"></i>
+                                        <div class="w-12 h-12 bg-gradient-to-br <?php echo $placeholder['gradient']; ?> rounded-lg flex items-center justify-center shadow-sm">
+                                            <i class="<?php echo $placeholder['icon']; ?> text-white text-lg"></i>
                                         </div>
                                         <div>
                                             <p class="font-medium text-gray-800"><?php echo htmlspecialchars($template['name']); ?></p>
@@ -111,7 +113,8 @@ try {
                                     </div>
                                 </td>
                                 <td class="px-6 py-4">
-                                    <span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm capitalize">
+                                    <span class="px-3 py-1 <?php echo $placeholder['bgLight']; ?> <?php echo $placeholder['textColor']; ?> rounded-full text-sm capitalize font-medium">
+                                        <i class="<?php echo $placeholder['icon']; ?> mr-1 text-xs"></i>
                                         <?php echo $template['category']; ?>
                                     </span>
                                 </td>
@@ -185,10 +188,11 @@ try {
                     <label class="block text-sm font-medium text-gray-700 mb-2">Category *</label>
                     <select name="category" required 
                             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
-                        <option value="retail">Retail</option>
-                        <option value="food">Food</option>
-                        <option value="freelance">Freelance</option>
-                        <option value="services">Services</option>
+                        <option value="retail">Retail & Shop</option>
+                        <option value="sarisari">Sari-Sari Store</option>
+                        <option value="food">Food & Restaurant</option>
+                        <option value="freelance">Freelance & Portfolio</option>
+                        <option value="services">Service Business</option>
                         <option value="general">General</option>
                     </select>
                 </div>

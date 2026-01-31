@@ -19,8 +19,8 @@ try {
     $stmt->execute([$userId]);
     $profile = $stmt->fetch();
     
-    // Get client sites
-    $stmt = $pdo->prepare("SELECT cs.*, t.name as template_name FROM client_sites cs 
+    // Get client sites with template info
+    $stmt = $pdo->prepare("SELECT cs.*, cs.subdomain, cs.published_at, t.name as template_name, t.category as template_category FROM client_sites cs 
                            LEFT JOIN templates t ON cs.template_id = t.id 
                            WHERE cs.user_id = ? ORDER BY cs.created_at DESC");
     $stmt->execute([$userId]);
@@ -179,42 +179,86 @@ $completedCount = count(array_filter($requests, fn($r) => $r['status'] === 'comp
                             </div>
                         <?php else: ?>
                             <div class="space-y-4">
-                                <?php foreach ($sites as $site): ?>
-                                    <div class="group flex items-center justify-between p-5 bg-gray-50 rounded-xl hover:bg-primary-50 border border-transparent hover:border-primary-100 transition-all duration-200">
-                                        <div class="flex items-center space-x-4">
-                                            <div class="w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl flex items-center justify-center shadow-md shadow-primary-500/20 group-hover:shadow-lg group-hover:shadow-primary-500/30 transition-all duration-200">
-                                                <i class="fas fa-globe text-white text-lg"></i>
+                                <?php foreach ($sites as $site): 
+                                    $templatePlaceholder = getTemplatePlaceholder($site['template_id'], $site['template_category'] ?? 'general');
+                                    $publicUrl = getPublicSiteUrl($site['subdomain'] ?? null);
+                                ?>
+                                    <div class="group p-5 bg-gray-50 rounded-xl hover:bg-primary-50 border border-transparent hover:border-primary-100 transition-all duration-200">
+                                        <div class="flex items-center justify-between">
+                                            <div class="flex items-center space-x-4">
+                                                <div class="w-14 h-14 bg-gradient-to-br <?php echo $templatePlaceholder['gradient']; ?> rounded-xl flex items-center justify-center shadow-md group-hover:shadow-lg transition-all duration-200">
+                                                    <i class="<?php echo $templatePlaceholder['icon']; ?> text-white text-lg"></i>
+                                                </div>
+                                                <div>
+                                                    <h3 class="font-bold text-dark group-hover:text-primary-600 transition-colors"><?php echo htmlspecialchars($site['site_name'] ?? 'Untitled Site'); ?></h3>
+                                                    <p class="text-sm text-gray-500 flex items-center mt-1">
+                                                        <i class="fas fa-palette text-xs mr-1.5"></i>
+                                                        <?php echo htmlspecialchars($site['template_name']); ?>
+                                                    </p>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <h3 class="font-bold text-dark group-hover:text-primary-600 transition-colors"><?php echo htmlspecialchars($site['site_name'] ?? 'Untitled Site'); ?></h3>
-                                                <p class="text-sm text-gray-500 flex items-center mt-1">
-                                                    <i class="fas fa-palette text-xs mr-1.5"></i>
-                                                    <?php echo htmlspecialchars($site['template_name']); ?>
-                                                </p>
+                                            <div class="flex items-center space-x-4">
+                                                <?php 
+                                                $statusClasses = [
+                                                    'draft' => 'bg-gray-100 text-gray-600',
+                                                    'pending' => 'bg-amber-100 text-amber-700',
+                                                    'active' => 'bg-green-100 text-green-700',
+                                                    'published' => 'bg-green-100 text-green-700'
+                                                ];
+                                                $statusClass = $statusClasses[$site['status']] ?? 'bg-gray-100 text-gray-600';
+                                                ?>
+                                                <span class="px-3 py-1.5 <?php echo $statusClass; ?> text-xs font-semibold rounded-lg capitalize">
+                                                    <?php if ($site['status'] === 'active'): ?>
+                                                        <i class="fas fa-check-circle mr-1"></i>Published
+                                                    <?php else: ?>
+                                                        <?php echo $site['status']; ?>
+                                                    <?php endif; ?>
+                                                </span>
+                                                <div class="flex items-center space-x-2">
+                                                    <a href="preview-site.php?id=<?php echo $site['id']; ?>" class="w-9 h-9 bg-white rounded-lg flex items-center justify-center text-gray-400 hover:text-primary-600 hover:bg-primary-50 border border-gray-200 hover:border-primary-200 transition-all" title="Preview">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                    <a href="edit-site.php?id=<?php echo $site['id']; ?>" class="w-9 h-9 bg-white rounded-lg flex items-center justify-center text-gray-400 hover:text-primary-600 hover:bg-primary-50 border border-gray-200 hover:border-primary-200 transition-all" title="Edit">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                </div>
                                             </div>
                                         </div>
-                                        <div class="flex items-center space-x-4">
-                                            <?php 
-                                            $statusClasses = [
-                                                'draft' => 'bg-gray-100 text-gray-600',
-                                                'pending' => 'bg-amber-100 text-amber-700',
-                                                'active' => 'bg-green-100 text-green-700',
-                                                'published' => 'bg-green-100 text-green-700'
-                                            ];
-                                            $statusClass = $statusClasses[$site['status']] ?? 'bg-gray-100 text-gray-600';
-                                            ?>
-                                            <span class="px-3 py-1.5 <?php echo $statusClass; ?> text-xs font-semibold rounded-lg capitalize">
-                                                <?php echo $site['status']; ?>
-                                            </span>
-                                            <div class="flex items-center space-x-2">
-                                                <a href="preview-site.php?id=<?php echo $site['id']; ?>" class="w-9 h-9 bg-white rounded-lg flex items-center justify-center text-gray-400 hover:text-primary-600 hover:bg-primary-50 border border-gray-200 hover:border-primary-200 transition-all" title="Preview">
-                                                    <i class="fas fa-eye"></i>
-                                                </a>
-                                                <a href="edit-site.php?id=<?php echo $site['id']; ?>" class="w-9 h-9 bg-white rounded-lg flex items-center justify-center text-gray-400 hover:text-primary-600 hover:bg-primary-50 border border-gray-200 hover:border-primary-200 transition-all" title="Edit">
-                                                    <i class="fas fa-edit"></i>
-                                                </a>
+                                        
+                                        <?php if ($site['status'] === 'active' && !empty($site['subdomain'])): ?>
+                                        <!-- Published URL Section -->
+                                        <div class="mt-4 pt-4 border-t border-gray-200">
+                                            <div class="flex items-center justify-between gap-3">
+                                                <div class="flex-1 min-w-0">
+                                                    <p class="text-xs text-gray-500 mb-1">
+                                                        <i class="fas fa-globe mr-1"></i>Public URL
+                                                        <?php if (!empty($site['published_at'])): ?>
+                                                        <span class="ml-2 text-green-600">
+                                                            • Published <?php echo date('M j, Y', strtotime($site['published_at'])); ?>
+                                                        </span>
+                                                        <?php endif; ?>
+                                                    </p>
+                                                    <div class="flex items-center gap-2">
+                                                        <input type="text" readonly 
+                                                               value="<?php echo htmlspecialchars($publicUrl); ?>"
+                                                               class="flex-1 text-xs bg-white px-3 py-1.5 border border-gray-200 rounded-lg truncate text-gray-600 cursor-text"
+                                                               id="url-<?php echo $site['id']; ?>">
+                                                        <button type="button" 
+                                                                onclick="copyUrl('url-<?php echo $site['id']; ?>', this)"
+                                                                class="px-3 py-1.5 bg-primary-500 text-white rounded-lg text-xs font-medium hover:bg-primary-600 transition flex-shrink-0"
+                                                                title="Copy URL">
+                                                            <i class="fas fa-copy"></i>
+                                                        </button>
+                                                        <a href="<?php echo htmlspecialchars($publicUrl); ?>" target="_blank"
+                                                           class="px-3 py-1.5 bg-green-500 text-white rounded-lg text-xs font-medium hover:bg-green-600 transition flex-shrink-0"
+                                                           title="Open site">
+                                                            <i class="fas fa-external-link-alt"></i>
+                                                        </a>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
+                                        <?php endif; ?>
                                     </div>
                                 <?php endforeach; ?>
                             </div>
@@ -399,5 +443,30 @@ $completedCount = count(array_filter($requests, fn($r) => $r['status'] === 'comp
         </div>
     </div>
 </section>
+
+<script>
+// Copy URL to clipboard
+function copyUrl(inputId, btn) {
+    const urlInput = document.getElementById(inputId);
+    if (urlInput) {
+        navigator.clipboard.writeText(urlInput.value).then(function() {
+            // Show feedback
+            const originalHtml = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-check"></i>';
+            btn.classList.remove('bg-primary-500', 'hover:bg-primary-600');
+            btn.classList.add('bg-green-500');
+            setTimeout(function() {
+                btn.innerHTML = originalHtml;
+                btn.classList.remove('bg-green-500');
+                btn.classList.add('bg-primary-500', 'hover:bg-primary-600');
+            }, 2000);
+        }).catch(function() {
+            // Fallback for older browsers
+            urlInput.select();
+            document.execCommand('copy');
+        });
+    }
+}
+</script>
 
 <?php require_once '../includes/footer.php'; ?>

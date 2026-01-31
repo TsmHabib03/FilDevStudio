@@ -1,0 +1,46 @@
+# FilDevStudio .htaccess
+# Apache Rewrite Rules for Pretty URLs
+
+# Enable Rewrite Engine
+RewriteEngine On
+
+# Set the base directory (adjust if installed in subdirectory)
+RewriteBase /fildevstudio/
+
+# Pretty URL for public sites
+# Converts: /fildevstudio/site/my-business -> /fildevstudio/public/site.php?s=my-business
+RewriteRule ^site/([a-z0-9-]+)/?$ public/site.php?s=$1 [L,QSA]
+
+# Prevent directory listing
+Options -Indexes
+
+# Protect sensitive files
+<FilesMatch "^\.">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Protect config and includes directories
+<FilesMatch "(config|database)\.php$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Set default charset
+AddDefaultCharset UTF-8
+
+# Enable GZIP compression (if mod_deflate is available)
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/css application/javascript application/json
+</IfModule>
+
+# Cache static assets (if mod_expires is available)
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType image/jpeg "access plus 1 month"
+    ExpiresByType image/png "access plus 1 month"
+    ExpiresByType image/gif "access plus 1 month"
+    ExpiresByType image/webp "access plus 1 month"
+    ExpiresByType text/css "access plus 1 week"
+    ExpiresByType application/javascript "access plus 1 week"
+</IfModule>

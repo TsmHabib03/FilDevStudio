@@ -25,6 +25,12 @@ try {
     if (!$site) {
         die('Site not found');
     }
+    
+    // Get site images
+    $logoImage = getSiteImage($pdo, $siteId, 'logo');
+    $heroImage = getSiteImage($pdo, $siteId, 'hero');
+    $galleryImages = getSiteImages($pdo, $siteId, 'gallery');
+    
 } catch (Exception $e) {
     die('Error loading site');
 }
@@ -33,12 +39,19 @@ $templateId = $site['template_id'] ?? 1;
 $primaryColor = $site['primary_color'] ?? '#3B82F6';
 $secondaryColor = $site['secondary_color'] ?? '#1E40AF';
 $accentColor = $site['accent_color'] ?? '#F59E0B';
+$fontHeading = $site['font_heading'] ?? 'Inter';
+$fontBody = $site['font_body'] ?? 'Inter';
 $siteName = $site['site_name'] ?? 'My Business';
 $heroTitle = $site['hero_title'] ?? 'Welcome to ' . $siteName;
 $heroSubtitle = $site['hero_subtitle'] ?? 'We provide excellent products and services to help your business grow.';
 $aboutContent = $site['about_content'] ?? 'We are a dedicated team committed to providing the best products and services to our customers.';
 $servicesContent = $site['services_content'] ?? '';
 $contactInfo = $site['contact_info'] ?? '';
+
+// Get font CSS families
+$headingFontFamily = getFontFamily($fontHeading);
+$bodyFontFamily = getFontFamily($fontBody);
+$googleFontsUrl = getGoogleFontsUrl($fontHeading, $fontBody);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -55,6 +68,10 @@ $contactInfo = $site['contact_info'] ?? '';
                         primary: '<?php echo $primaryColor; ?>',
                         secondary: '<?php echo $secondaryColor; ?>',
                         accent: '<?php echo $accentColor; ?>'
+                    },
+                    fontFamily: {
+                        heading: [<?php echo $headingFontFamily; ?>],
+                        body: [<?php echo $bodyFontFamily; ?>]
                     }
                 }
             }
@@ -63,14 +80,17 @@ $contactInfo = $site['contact_info'] ?? '';
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="<?php echo htmlspecialchars($googleFontsUrl); ?>" rel="stylesheet">
     <style>
         .gradient-hero { background: linear-gradient(135deg, <?php echo $primaryColor; ?> 0%, <?php echo $secondaryColor; ?> 100%); }
-        .font-serif-display { font-family: 'Playfair Display', serif; }
-        .font-sans-modern { font-family: 'Inter', sans-serif; }
+        .font-heading { font-family: <?php echo $headingFontFamily; ?>; }
+        .font-body { font-family: <?php echo $bodyFontFamily; ?>; }
+        /* Apply fonts globally */
+        h1, h2, h3, h4, h5, h6, nav a { font-family: <?php echo $headingFontFamily; ?>; }
+        body, p, span, li, div { font-family: <?php echo $bodyFontFamily; ?>; }
     </style>
 </head>
-<body class="font-sans-modern">
+<body class="font-body">
     <!-- Preview Banner -->
     <div class="bg-yellow-500 text-yellow-900 text-center py-2 text-sm fixed top-0 left-0 right-0 z-[100]">
         <i class="fas fa-eye mr-2"></i>Preview Mode - 
@@ -84,9 +104,15 @@ $contactInfo = $site['contact_info'] ?? '';
         <!-- Header -->
         <nav class="bg-white border-b sticky top-8 z-50">
             <div class="max-w-6xl mx-auto px-4 md:px-8 py-4 flex justify-between items-center">
+                <?php if ($logoImage): ?>
+                <img src="../<?php echo htmlspecialchars($logoImage['image_path']); ?>" 
+                     alt="<?php echo htmlspecialchars($logoImage['alt_text'] ?? $siteName); ?>"
+                     class="h-10 w-auto object-contain">
+                <?php else: ?>
                 <div class="text-xl md:text-2xl font-serif-display tracking-wide" style="color: <?php echo $primaryColor; ?>;">
                     <em><?php echo htmlspecialchars($siteName); ?></em>
                 </div>
+                <?php endif; ?>
                 <div class="hidden md:flex space-x-8 text-sm font-medium text-gray-600">
                     <a href="#home" class="hover:text-gray-900">Home</a>
                     <a href="#about" class="hover:text-gray-900">About</a>
@@ -120,12 +146,20 @@ $contactInfo = $site['contact_info'] ?? '';
                         </a>
                     </div>
                 </div>
+                <?php if ($heroImage): ?>
+                <div class="h-64 md:h-80 rounded-2xl overflow-hidden shadow-lg">
+                    <img src="../<?php echo htmlspecialchars($heroImage['image_path']); ?>" 
+                         alt="<?php echo htmlspecialchars($heroImage['alt_text'] ?? 'Hero Image'); ?>"
+                         class="w-full h-full object-cover">
+                </div>
+                <?php else: ?>
                 <div class="h-64 md:h-80 rounded-2xl flex items-center justify-center shadow-lg" style="background: linear-gradient(135deg, <?php echo $accentColor; ?>30, <?php echo $primaryColor; ?>20);">
                     <div class="text-center text-gray-400">
                         <i class="fas fa-image text-5xl mb-3"></i>
                         <p class="text-sm">Hero Image</p>
                     </div>
                 </div>
+                <?php endif; ?>
             </div>
         </section>
 
@@ -169,10 +203,24 @@ $contactInfo = $site['contact_info'] ?? '';
                 <div class="w-16 h-1 mx-auto rounded mb-12" style="background: <?php echo $accentColor; ?>;"></div>
                 
                 <?php if (!empty($servicesContent)): ?>
-                    <div class="max-w-3xl mx-auto text-center">
+                    <div class="max-w-3xl mx-auto text-center mb-12">
                         <p class="text-gray-600 text-lg"><?php echo nl2br(htmlspecialchars($servicesContent)); ?></p>
                     </div>
-                <?php else: ?>
+                <?php endif; ?>
+                
+                <?php if (!empty($galleryImages)): ?>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+                        <?php foreach ($galleryImages as $img): ?>
+                        <div class="group cursor-pointer">
+                            <div class="aspect-[3/4] rounded-lg overflow-hidden mb-3">
+                                <img src="../<?php echo htmlspecialchars($img['image_path']); ?>" 
+                                     alt="<?php echo htmlspecialchars($img['alt_text'] ?? 'Product'); ?>"
+                                     class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+                            </div>
+                        </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php elseif (empty($servicesContent)): ?>
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
                         <?php for($i = 1; $i <= 4; $i++): ?>
                         <div class="group cursor-pointer">
@@ -227,9 +275,15 @@ $contactInfo = $site['contact_info'] ?? '';
     <div class="min-h-screen" style="background: #FFFBF5;">
         <!-- Header -->
         <nav class="flex justify-between items-center py-4 px-4 md:px-8 bg-white/90 backdrop-blur-sm sticky top-8 z-50 shadow-sm">
+            <?php if ($logoImage): ?>
+            <img src="../<?php echo htmlspecialchars($logoImage['image_path']); ?>" 
+                 alt="<?php echo htmlspecialchars($logoImage['alt_text'] ?? $siteName); ?>"
+                 class="h-10 w-auto object-contain">
+            <?php else: ?>
             <div class="text-xl md:text-2xl font-serif-display" style="color: <?php echo $primaryColor; ?>;">
                 <?php echo htmlspecialchars($siteName); ?>
             </div>
+            <?php endif; ?>
             <div class="hidden md:flex space-x-8 text-sm font-medium text-gray-700">
                 <a href="#home" class="hover:opacity-70">Home</a>
                 <a href="#about" class="hover:opacity-70">About</a>
@@ -242,8 +296,16 @@ $contactInfo = $site['contact_info'] ?? '';
         </nav>
 
         <!-- Hero -->
-        <section id="home" class="relative h-80 md:h-[450px] flex items-center justify-center overflow-hidden" style="background: linear-gradient(135deg, <?php echo $primaryColor; ?>, <?php echo $accentColor; ?>);">
+        <section id="home" class="relative h-80 md:h-[450px] flex items-center justify-center overflow-hidden">
+            <?php if ($heroImage): ?>
+            <img src="../<?php echo htmlspecialchars($heroImage['image_path']); ?>" 
+                 alt="<?php echo htmlspecialchars($heroImage['alt_text'] ?? 'Hero Image'); ?>"
+                 class="absolute inset-0 w-full h-full object-cover">
+            <div class="absolute inset-0 bg-black/50"></div>
+            <?php else: ?>
+            <div class="absolute inset-0" style="background: linear-gradient(135deg, <?php echo $primaryColor; ?>, <?php echo $accentColor; ?>);"></div>
             <div class="absolute inset-0 bg-black/40"></div>
+            <?php endif; ?>
             <div class="relative z-10 text-center text-white px-4">
                 <p class="text-sm tracking-widest uppercase mb-3" style="color: <?php echo $accentColor; ?>;">Welcome to</p>
                 <h1 class="text-4xl md:text-6xl font-serif-display mb-4"><?php echo htmlspecialchars($heroTitle); ?></h1>
@@ -330,7 +392,13 @@ $contactInfo = $site['contact_info'] ?? '';
     <div class="min-h-screen text-white" style="background: <?php echo $primaryColor; ?>;">
         <!-- Header -->
         <nav class="flex justify-between items-center py-6 px-4 md:px-8 sticky top-8 z-50">
+            <?php if ($logoImage): ?>
+            <img src="../<?php echo htmlspecialchars($logoImage['image_path']); ?>" 
+                 alt="<?php echo htmlspecialchars($logoImage['alt_text'] ?? $siteName); ?>"
+                 class="h-10 w-auto object-contain">
+            <?php else: ?>
             <div class="text-xl font-bold"><?php echo htmlspecialchars(substr($siteName, 0, 2)); ?>.</div>
+            <?php endif; ?>
             <div class="hidden md:flex space-x-8 text-sm text-gray-400">
                 <a href="#home" class="hover:text-white">Home</a>
                 <a href="#about" class="hover:text-white">About</a>
@@ -375,7 +443,20 @@ $contactInfo = $site['contact_info'] ?? '';
             <div class="max-w-5xl mx-auto">
                 <h2 class="text-2xl font-bold mb-8">My Work</h2>
                 
-                <?php if (!empty($servicesContent)): ?>
+                <?php if (!empty($galleryImages)): ?>
+                    <div class="grid md:grid-cols-2 gap-6 mb-8">
+                        <?php foreach ($galleryImages as $img): ?>
+                        <div class="group cursor-pointer rounded-xl overflow-hidden">
+                            <img src="../<?php echo htmlspecialchars($img['image_path']); ?>" 
+                                 alt="<?php echo htmlspecialchars($img['alt_text'] ?? 'Project'); ?>"
+                                 class="w-full h-64 object-cover group-hover:scale-105 transition duration-300">
+                        </div>
+                        <?php endforeach; ?>
+                    </div>
+                    <?php if (!empty($servicesContent)): ?>
+                        <p class="text-gray-400"><?php echo nl2br(htmlspecialchars($servicesContent)); ?></p>
+                    <?php endif; ?>
+                <?php elseif (!empty($servicesContent)): ?>
                     <p class="text-gray-400"><?php echo nl2br(htmlspecialchars($servicesContent)); ?></p>
                 <?php else: ?>
                     <div class="grid md:grid-cols-2 gap-6">
@@ -421,12 +502,18 @@ $contactInfo = $site['contact_info'] ?? '';
         <!-- Header -->
         <nav class="bg-white shadow-sm sticky top-8 z-50">
             <div class="max-w-6xl mx-auto px-4 md:px-8 py-4 flex justify-between items-center">
+                <?php if ($logoImage): ?>
+                <img src="../<?php echo htmlspecialchars($logoImage['image_path']); ?>" 
+                     alt="<?php echo htmlspecialchars($logoImage['alt_text'] ?? $siteName); ?>"
+                     class="h-10 w-auto object-contain">
+                <?php else: ?>
                 <div class="flex items-center gap-2">
                     <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background: <?php echo $primaryColor; ?>;">
                         <span class="text-white font-bold text-sm"><?php echo strtoupper(substr($siteName, 0, 1)); ?></span>
                     </div>
                     <span class="font-bold text-gray-900"><?php echo htmlspecialchars($siteName); ?></span>
                 </div>
+                <?php endif; ?>
                 <div class="hidden md:flex space-x-8 text-sm font-medium text-gray-600">
                     <a href="#home" class="hover:opacity-70">Home</a>
                     <a href="#services" class="hover:opacity-70">Services</a>
@@ -445,8 +532,16 @@ $contactInfo = $site['contact_info'] ?? '';
         </nav>
 
         <!-- Hero -->
-        <section id="home" class="py-16 md:py-24 px-4 md:px-8 text-white" style="background: linear-gradient(135deg, <?php echo $primaryColor; ?>, <?php echo $secondaryColor; ?>);">
-            <div class="max-w-4xl mx-auto text-center">
+        <section id="home" class="relative py-16 md:py-24 px-4 md:px-8 text-white overflow-hidden">
+            <?php if ($heroImage): ?>
+            <img src="../<?php echo htmlspecialchars($heroImage['image_path']); ?>" 
+                 alt="<?php echo htmlspecialchars($heroImage['alt_text'] ?? 'Hero Image'); ?>"
+                 class="absolute inset-0 w-full h-full object-cover">
+            <div class="absolute inset-0 bg-black/60"></div>
+            <?php else: ?>
+            <div class="absolute inset-0" style="background: linear-gradient(135deg, <?php echo $primaryColor; ?>, <?php echo $secondaryColor; ?>);"></div>
+            <?php endif; ?>
+            <div class="relative max-w-4xl mx-auto text-center">
                 <div class="flex items-center justify-center gap-2 mb-4">
                     <i class="fas fa-star" style="color: <?php echo $accentColor; ?>;"></i>
                     <span class="text-sm opacity-80">Trusted by businesses</span>
@@ -1070,9 +1165,15 @@ $contactInfo = $site['contact_info'] ?? '';
         <!-- Header -->
         <nav class="sticky top-8 z-50" style="background: <?php echo $primaryColor; ?>;">
             <div class="max-w-6xl mx-auto px-4 md:px-8 py-4 flex justify-between items-center">
+                <?php if ($logoImage): ?>
+                <img src="../<?php echo htmlspecialchars($logoImage['image_path']); ?>" 
+                     alt="<?php echo htmlspecialchars($logoImage['alt_text'] ?? $siteName); ?>"
+                     class="h-10 w-auto object-contain bg-white/10 rounded px-2">
+                <?php else: ?>
                 <div class="text-xl md:text-2xl font-bold text-white flex items-center gap-2">
                     🏪 <?php echo htmlspecialchars($siteName); ?>
                 </div>
+                <?php endif; ?>
                 <span class="px-3 py-1 rounded-full text-sm font-bold" style="background: white; color: <?php echo $primaryColor; ?>;">
                     BUKAS NA! 🎉
                 </span>
@@ -1083,6 +1184,13 @@ $contactInfo = $site['contact_info'] ?? '';
         <section id="home" class="py-10 md:py-16 px-4">
             <div class="max-w-4xl mx-auto">
                 <div class="bg-white rounded-2xl p-6 md:p-10 text-center shadow-xl">
+                    <?php if ($heroImage): ?>
+                    <div class="mb-6 rounded-xl overflow-hidden">
+                        <img src="../<?php echo htmlspecialchars($heroImage['image_path']); ?>" 
+                             alt="<?php echo htmlspecialchars($heroImage['alt_text'] ?? 'Store Image'); ?>"
+                             class="w-full h-48 object-cover">
+                    </div>
+                    <?php endif; ?>
                     <p class="inline-block px-4 py-1 rounded-full text-sm mb-4" style="background: <?php echo $primaryColor; ?>15; color: <?php echo $primaryColor; ?>;">📦 TINGI PRICES - MURA NA!</p>
                     <h1 class="text-3xl md:text-4xl font-bold mb-4" style="color: <?php echo $secondaryColor; ?>;"><?php echo htmlspecialchars($heroTitle); ?></h1>
                     <p class="text-gray-600 text-lg mb-6"><?php echo htmlspecialchars($heroSubtitle); ?></p>

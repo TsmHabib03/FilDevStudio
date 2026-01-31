@@ -62,24 +62,6 @@ foreach ($templates as $t) {
         $categories[$t['category']]['count']++;
     }
 }
-
-$categoryIcons = [
-    'retail' => 'fas fa-shopping-bag',
-    'sarisari' => 'fas fa-store-alt',
-    'food' => 'fas fa-utensils',
-    'freelance' => 'fas fa-briefcase',
-    'services' => 'fas fa-cogs',
-    'general' => 'fas fa-globe'
-];
-
-$categoryColors = [
-    'retail' => 'from-primary-500 to-primary-600',
-    'sarisari' => 'from-yellow-500 to-orange-500',
-    'food' => 'from-orange-500 to-red-500',
-    'freelance' => 'from-accent-500 to-purple-600',
-    'services' => 'from-secondary-500 to-teal-600',
-    'general' => 'from-gray-500 to-gray-600'
-];
 ?>
 
 <!-- Hero Header Section -->
@@ -174,19 +156,19 @@ $categoryColors = [
         
         <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8" id="templates-grid">
             <?php foreach ($templates as $template): 
-                $catColor = $categoryColors[$template['category']] ?? 'from-gray-500 to-gray-600';
-                $catIcon = $categoryIcons[$template['category']] ?? 'fas fa-globe';
+                // Get placeholder configuration from helper function
+                $placeholder = getTemplatePlaceholder($template['id'], $template['category']);
                 $features = $template['features'] ?? ['Responsive', 'Customizable', 'SEO Ready'];
             ?>
                 <div class="template-card group bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100 hover:shadow-2xl hover:border-primary-100 transition-all duration-300 hover:-translate-y-1" data-category="<?php echo $template['category']; ?>">
-                    <!-- Template Preview -->
-                    <div class="relative h-56 bg-gradient-to-br <?php echo $catColor; ?> overflow-hidden">
+                    <!-- Template Preview Placeholder -->
+                    <div class="relative h-56 bg-gradient-to-br <?php echo $placeholder['gradient']; ?> overflow-hidden">
                         <!-- Decorative Pattern -->
                         <div class="absolute inset-0 opacity-10">
                             <div class="absolute top-4 left-4 w-32 h-32 border-2 border-white rounded-lg"></div>
                             <div class="absolute bottom-4 right-4 w-24 h-24 border-2 border-white rounded-full"></div>
                             <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                                <i class="<?php echo $catIcon; ?> text-8xl text-white"></i>
+                                <i class="<?php echo $placeholder['icon']; ?> text-8xl text-white"></i>
                             </div>
                         </div>
                         
@@ -201,7 +183,7 @@ $categoryColors = [
                         <!-- Category Badge -->
                         <div class="absolute top-4 left-4 z-10">
                             <span class="inline-flex items-center px-3 py-1.5 bg-white/90 backdrop-blur-sm text-dark text-xs font-semibold rounded-lg shadow-sm capitalize">
-                                <i class="<?php echo $catIcon; ?> mr-1.5 text-primary-500"></i>
+                                <i class="<?php echo $placeholder['icon']; ?> mr-1.5 <?php echo $placeholder['textColor']; ?>"></i>
                                 <?php echo $template['category']; ?>
                             </span>
                         </div>

@@ -59,16 +59,22 @@ CREATE TABLE IF NOT EXISTS client_sites (
     primary_color VARCHAR(7) DEFAULT '#3B82F6',
     secondary_color VARCHAR(7) DEFAULT '#1E40AF',
     accent_color VARCHAR(7) DEFAULT '#F59E0B',
+    font_heading VARCHAR(50) DEFAULT 'Inter',
+    font_body VARCHAR(50) DEFAULT 'Inter',
     hero_title VARCHAR(255),
     hero_subtitle TEXT,
     about_content TEXT,
     services_content TEXT,
     contact_info TEXT,
     status ENUM('draft', 'active', 'suspended') DEFAULT 'draft',
+    subdomain VARCHAR(50) UNIQUE,
+    published_at TIMESTAMP NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (template_id) REFERENCES templates(id) ON DELETE RESTRICT
+    FOREIGN KEY (template_id) REFERENCES templates(id) ON DELETE RESTRICT,
+    INDEX idx_subdomain (subdomain),
+    INDEX idx_status_subdomain (status, subdomain)
 ) ENGINE=InnoDB;
 
 -- Customization Requests Table
