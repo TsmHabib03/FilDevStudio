@@ -2,6 +2,7 @@
 /**
  * Preview Client Site - Template-Based Rendering
  * Renders different layouts based on the selected template
+ * Now uses modular template files from public/templates/
  */
 $siteId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
@@ -26,6 +27,15 @@ try {
         die('Site not found');
     }
     
+    // ============================================
+    // CHECK FOR CUSTOM FULL HTML (Admin uploaded)
+    // If admin has uploaded a custom index.html, show that instead
+    // ============================================
+    if (!empty($site['custom_full_html'])) {
+        echo $site['custom_full_html'];
+        exit;
+    }
+    
     // Get site images
     $logoImage = getSiteImage($pdo, $siteId, 'logo');
     $heroImage = getSiteImage($pdo, $siteId, 'hero');
@@ -48,17 +58,24 @@ $aboutContent = $site['about_content'] ?? 'We are a dedicated team committed to 
 $servicesContent = $site['services_content'] ?? '';
 $contactInfo = $site['contact_info'] ?? '';
 
+// Get social media links
+$socialLinks = getSocialLinks($site);
+
 // Get font CSS families
 $headingFontFamily = getFontFamily($fontHeading);
 $bodyFontFamily = getFontFamily($fontBody);
 $googleFontsUrl = getGoogleFontsUrl($fontHeading, $fontBody);
+
+// Check if modular template file exists
+$templateFile = __DIR__ . '/../public/templates/template-' . $templateId . '.php';
+$useModularTemplate = file_exists($templateFile) && $templateId >= 1 && $templateId <= 5;
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo htmlspecialchars($siteName); ?></title>
+    <title><?php echo htmlspecialchars($siteName); ?> - Preview</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -85,9 +102,10 @@ $googleFontsUrl = getGoogleFontsUrl($fontHeading, $fontBody);
         .gradient-hero { background: linear-gradient(135deg, <?php echo $primaryColor; ?> 0%, <?php echo $secondaryColor; ?> 100%); }
         .font-heading { font-family: <?php echo $headingFontFamily; ?>; }
         .font-body { font-family: <?php echo $bodyFontFamily; ?>; }
-        /* Apply fonts globally */
         h1, h2, h3, h4, h5, h6, nav a { font-family: <?php echo $headingFontFamily; ?>; }
         body, p, span, li, div { font-family: <?php echo $bodyFontFamily; ?>; }
+        .social-icon { transition: all 0.3s ease; }
+        .social-icon:hover { transform: scale(1.15); }
     </style>
 </head>
 <body class="font-body">
@@ -99,7 +117,15 @@ $googleFontsUrl = getGoogleFontsUrl($fontHeading, $fontBody);
     </div>
     <div class="h-8"></div>
 
-    <?php if ($templateId == 1): // ========== MODERN RETAIL ========== ?>
+    <?php 
+    // Use modular template if available (templates 1-5)
+    if ($useModularTemplate):
+        include $templateFile;
+    else:
+        // Fallback to inline templates for any other template IDs
+    ?>
+    
+    <?php if ($templateId == 4): // ========== SMALL RETAIL SHOP (was Modern Retail template 1) ========== ?>
     <div class="min-h-screen" style="background: #FAFAFA;">
         <!-- Header -->
         <nav class="bg-white border-b sticky top-8 z-50">
@@ -120,6 +146,15 @@ $googleFontsUrl = getGoogleFontsUrl($fontHeading, $fontBody);
                     <a href="#contact" class="hover:text-gray-900">Contact</a>
                 </div>
                 <div class="flex items-center space-x-4 text-gray-600">
+                    <?php if (!empty($socialLinks)): ?>
+                    <div class="hidden md:flex items-center space-x-3 social-icons-header">
+                        <?php foreach (array_slice($socialLinks, 0, 4) as $link): ?>
+                        <a href="<?php echo htmlspecialchars($link['url']); ?>" target="_blank" rel="noopener noreferrer" title="<?php echo htmlspecialchars($link['label']); ?>" class="social-icon">
+                            <i class="<?php echo htmlspecialchars($link['icon']); ?>"></i>
+                        </a>
+                        <?php endforeach; ?>
+                    </div>
+                    <?php endif; ?>
                     <i class="fas fa-search cursor-pointer hover:text-gray-900"></i>
                     <i class="fas fa-shopping-bag cursor-pointer hover:text-gray-900"></i>
                 </div>
@@ -266,6 +301,17 @@ $googleFontsUrl = getGoogleFontsUrl($fontHeading, $fontBody);
         <footer class="py-10 px-4 text-white" style="background: <?php echo $primaryColor; ?>;">
             <div class="max-w-6xl mx-auto text-center">
                 <p class="font-serif-display text-xl mb-4"><em><?php echo htmlspecialchars($siteName); ?></em></p>
+                <?php if (!empty($socialLinks)): ?>
+                <div class="flex justify-center items-center space-x-4 mb-4 social-icons-footer">
+                    <?php foreach ($socialLinks as $link): ?>
+                    <a href="<?php echo htmlspecialchars($link['url']); ?>" target="_blank" rel="noopener noreferrer" 
+                       title="<?php echo htmlspecialchars($link['label']); ?>"
+                       class="w-10 h-10 flex items-center justify-center bg-white/20 hover:bg-white/30 rounded-full transition social-icon">
+                        <i class="<?php echo htmlspecialchars($link['icon']); ?> text-lg"></i>
+                    </a>
+                    <?php endforeach; ?>
+                </div>
+                <?php endif; ?>
                 <p class="text-white/60 text-sm">&copy; <?php echo date('Y'); ?> All rights reserved. Powered by FilDevStudio</p>
             </div>
         </footer>
@@ -290,9 +336,20 @@ $googleFontsUrl = getGoogleFontsUrl($fontHeading, $fontBody);
                 <a href="#menu" class="hover:opacity-70">Menu</a>
                 <a href="#contact" class="hover:opacity-70">Contact</a>
             </div>
-            <button class="px-4 md:px-6 py-2 rounded-full text-sm font-medium text-white transition hover:opacity-90" style="background: <?php echo $accentColor; ?>;">
-                Reserve Table
-            </button>
+            <div class="flex items-center gap-4">
+                <?php if (!empty($socialLinks)): ?>
+                <div class="hidden md:flex items-center space-x-3 social-icons-header">
+                    <?php foreach (array_slice($socialLinks, 0, 3) as $link): ?>
+                    <a href="<?php echo htmlspecialchars($link['url']); ?>" target="_blank" rel="noopener noreferrer" title="<?php echo htmlspecialchars($link['label']); ?>" class="social-icon text-gray-600 hover:text-gray-900">
+                        <i class="<?php echo htmlspecialchars($link['icon']); ?>"></i>
+                    </a>
+                    <?php endforeach; ?>
+                </div>
+                <?php endif; ?>
+                <button class="px-4 md:px-6 py-2 rounded-full text-sm font-medium text-white transition hover:opacity-90" style="background: <?php echo $accentColor; ?>;">
+                    Reserve Table
+                </button>
+            </div>
         </nav>
 
         <!-- Hero -->
@@ -384,11 +441,22 @@ $googleFontsUrl = getGoogleFontsUrl($fontHeading, $fontBody);
         <!-- Footer -->
         <footer class="py-8 px-4 text-center text-white text-sm" style="background: <?php echo $secondaryColor; ?>;">
             <p class="font-serif-display text-lg mb-2"><?php echo htmlspecialchars($siteName); ?></p>
+            <?php if (!empty($socialLinks)): ?>
+            <div class="flex justify-center items-center space-x-4 mb-3 social-icons-footer">
+                <?php foreach ($socialLinks as $link): ?>
+                <a href="<?php echo htmlspecialchars($link['url']); ?>" target="_blank" rel="noopener noreferrer" 
+                   title="<?php echo htmlspecialchars($link['label']); ?>"
+                   class="w-9 h-9 flex items-center justify-center bg-white/20 hover:bg-white/30 rounded-full transition social-icon">
+                    <i class="<?php echo htmlspecialchars($link['icon']); ?>"></i>
+                </a>
+                <?php endforeach; ?>
+            </div>
+            <?php endif; ?>
             <p class="opacity-60">&copy; <?php echo date('Y'); ?> All rights reserved. Powered by FilDevStudio</p>
         </footer>
     </div>
 
-    <?php elseif ($templateId == 3): // ========== FREELANCER PORTFOLIO ========== ?>
+    <?php elseif ($templateId == 5): // ========== FREELANCER PORTFOLIO ========== ?>
     <div class="min-h-screen text-white" style="background: <?php echo $primaryColor; ?>;">
         <!-- Header -->
         <nav class="flex justify-between items-center py-6 px-4 md:px-8 sticky top-8 z-50">
@@ -405,9 +473,20 @@ $googleFontsUrl = getGoogleFontsUrl($fontHeading, $fontBody);
                 <a href="#work" class="hover:text-white">Work</a>
                 <a href="#contact" class="hover:text-white">Contact</a>
             </div>
-            <a href="#contact" class="border px-4 py-2 rounded-full text-sm hover:bg-white hover:text-gray-900 transition" style="border-color: <?php echo $secondaryColor; ?>;">
-                Let's Talk
-            </a>
+            <div class="flex items-center gap-4">
+                <?php if (!empty($socialLinks)): ?>
+                <div class="hidden md:flex items-center space-x-3 social-icons-header text-gray-400">
+                    <?php foreach (array_slice($socialLinks, 0, 4) as $link): ?>
+                    <a href="<?php echo htmlspecialchars($link['url']); ?>" target="_blank" rel="noopener noreferrer" title="<?php echo htmlspecialchars($link['label']); ?>" class="social-icon hover:text-white">
+                        <i class="<?php echo htmlspecialchars($link['icon']); ?>"></i>
+                    </a>
+                    <?php endforeach; ?>
+                </div>
+                <?php endif; ?>
+                <a href="#contact" class="border px-4 py-2 rounded-full text-sm hover:bg-white hover:text-gray-900 transition" style="border-color: <?php echo $secondaryColor; ?>;">
+                    Let's Talk
+                </a>
+            </div>
         </nav>
 
         <!-- Hero -->
@@ -493,11 +572,22 @@ $googleFontsUrl = getGoogleFontsUrl($fontHeading, $fontBody);
 
         <!-- Footer -->
         <footer class="py-8 px-4 text-center text-gray-500 text-sm border-t" style="border-color: rgba(255,255,255,0.1);">
+            <?php if (!empty($socialLinks)): ?>
+            <div class="flex justify-center items-center space-x-4 mb-4 social-icons-footer">
+                <?php foreach ($socialLinks as $link): ?>
+                <a href="<?php echo htmlspecialchars($link['url']); ?>" target="_blank" rel="noopener noreferrer" 
+                   title="<?php echo htmlspecialchars($link['label']); ?>"
+                   class="w-10 h-10 flex items-center justify-center bg-white/10 hover:bg-white/20 rounded-full transition social-icon text-gray-400 hover:text-white">
+                    <i class="<?php echo htmlspecialchars($link['icon']); ?> text-lg"></i>
+                </a>
+                <?php endforeach; ?>
+            </div>
+            <?php endif; ?>
             <p>&copy; <?php echo date('Y'); ?> <?php echo htmlspecialchars($siteName); ?>. Powered by FilDevStudio</p>
         </footer>
     </div>
 
-    <?php elseif ($templateId == 4): // ========== SERVICE BUSINESS ========== ?>
+    <?php elseif ($templateId == 3): // ========== LOCAL SERVICES ========== ?>
     <div class="min-h-screen bg-white">
         <!-- Header -->
         <nav class="bg-white shadow-sm sticky top-8 z-50">
@@ -521,6 +611,15 @@ $googleFontsUrl = getGoogleFontsUrl($fontHeading, $fontBody);
                     <a href="#contact" class="hover:opacity-70">Contact</a>
                 </div>
                 <div class="flex items-center gap-4">
+                    <?php if (!empty($socialLinks)): ?>
+                    <div class="hidden lg:flex items-center space-x-2 social-icons-header text-gray-500">
+                        <?php foreach (array_slice($socialLinks, 0, 3) as $link): ?>
+                        <a href="<?php echo htmlspecialchars($link['url']); ?>" target="_blank" rel="noopener noreferrer" title="<?php echo htmlspecialchars($link['label']); ?>" class="social-icon hover:text-gray-900">
+                            <i class="<?php echo htmlspecialchars($link['icon']); ?>"></i>
+                        </a>
+                        <?php endforeach; ?>
+                    </div>
+                    <?php endif; ?>
                     <?php if (!empty($site['contact_phone'])): ?>
                     <span class="hidden md:block text-sm text-gray-600"><i class="fas fa-phone mr-2" style="color: <?php echo $primaryColor; ?>;"></i><?php echo htmlspecialchars($site['contact_phone']); ?></span>
                     <?php endif; ?>
@@ -636,6 +735,17 @@ $googleFontsUrl = getGoogleFontsUrl($fontHeading, $fontBody);
         <footer class="py-10 px-4 bg-gray-900 text-white">
             <div class="max-w-5xl mx-auto text-center">
                 <p class="font-bold text-lg mb-2"><?php echo htmlspecialchars($siteName); ?></p>
+                <?php if (!empty($socialLinks)): ?>
+                <div class="flex justify-center items-center space-x-4 mb-3 social-icons-footer">
+                    <?php foreach ($socialLinks as $link): ?>
+                    <a href="<?php echo htmlspecialchars($link['url']); ?>" target="_blank" rel="noopener noreferrer" 
+                       title="<?php echo htmlspecialchars($link['label']); ?>"
+                       class="w-10 h-10 flex items-center justify-center bg-white/10 hover:bg-white/20 rounded-full transition social-icon">
+                        <i class="<?php echo htmlspecialchars($link['icon']); ?> text-lg"></i>
+                    </a>
+                    <?php endforeach; ?>
+                </div>
+                <?php endif; ?>
                 <p class="text-gray-400 text-sm">&copy; <?php echo date('Y'); ?> All rights reserved. Powered by FilDevStudio</p>
             </div>
         </footer>
@@ -645,7 +755,13 @@ $googleFontsUrl = getGoogleFontsUrl($fontHeading, $fontBody);
     <div class="min-h-screen text-white" style="background: <?php echo $primaryColor; ?>;">
         <!-- Header -->
         <nav class="flex justify-between items-center p-4 md:p-6 border-b sticky top-8 z-50" style="border-color: rgba(255,255,255,0.1); background: <?php echo $primaryColor; ?>;">
+            <?php if ($logoImage): ?>
+            <img src="../<?php echo htmlspecialchars($logoImage['image_path']); ?>" 
+                 alt="<?php echo htmlspecialchars($logoImage['alt_text'] ?? $siteName); ?>"
+                 class="h-10 w-auto object-contain">
+            <?php else: ?>
             <div class="text-2xl md:text-3xl font-black tracking-tighter"><?php echo strtoupper(htmlspecialchars($siteName)); ?>.</div>
+            <?php endif; ?>
             <div class="hidden md:flex space-x-8 text-xs uppercase tracking-widest text-gray-400">
                 <a href="#home" class="hover:text-white">Home</a>
                 <a href="#shop" class="hover:text-white">Shop</a>
@@ -653,6 +769,15 @@ $googleFontsUrl = getGoogleFontsUrl($fontHeading, $fontBody);
                 <a href="#contact" class="hover:text-white">Contact</a>
             </div>
             <div class="flex items-center space-x-4">
+                <?php if (!empty($socialLinks)): ?>
+                <div class="hidden md:flex items-center space-x-3 social-icons-header text-gray-400">
+                    <?php foreach (array_slice($socialLinks, 0, 3) as $link): ?>
+                    <a href="<?php echo htmlspecialchars($link['url']); ?>" target="_blank" rel="noopener noreferrer" title="<?php echo htmlspecialchars($link['label']); ?>" class="social-icon hover:text-white">
+                        <i class="<?php echo htmlspecialchars($link['icon']); ?>"></i>
+                    </a>
+                    <?php endforeach; ?>
+                </div>
+                <?php endif; ?>
                 <i class="fas fa-search text-gray-400 hover:text-white cursor-pointer"></i>
                 <i class="fas fa-shopping-bag text-gray-400 hover:text-white cursor-pointer"></i>
             </div>
@@ -660,7 +785,14 @@ $googleFontsUrl = getGoogleFontsUrl($fontHeading, $fontBody);
 
         <!-- Hero -->
         <section id="home" class="relative min-h-[400px] md:min-h-[500px] flex items-center justify-center overflow-hidden">
+            <?php if ($heroImage): ?>
+            <img src="../<?php echo htmlspecialchars($heroImage['image_path']); ?>" 
+                 alt="<?php echo htmlspecialchars($heroImage['alt_text'] ?? 'Hero Image'); ?>"
+                 class="absolute inset-0 w-full h-full object-cover">
+            <div class="absolute inset-0 bg-black/50"></div>
+            <?php else: ?>
             <div class="absolute inset-0" style="background: linear-gradient(135deg, <?php echo $secondaryColor; ?>50, <?php echo $primaryColor; ?>, <?php echo $accentColor; ?>30);"></div>
+            <?php endif; ?>
             <div class="relative z-10 text-center px-4">
                 <p class="text-sm tracking-widest uppercase mb-4" style="color: <?php echo $secondaryColor; ?>;">New Collection</p>
                 <h1 class="text-5xl md:text-8xl font-black tracking-tighter leading-none mb-6">
@@ -685,14 +817,28 @@ $googleFontsUrl = getGoogleFontsUrl($fontHeading, $fontBody);
             </div>
         </section>
 
-        <!-- Shop/Products -->
+        <!-- Shop/Products with Gallery -->
         <section id="shop" class="py-12 px-4 md:px-8">
             <div class="flex justify-between items-center mb-8">
                 <h2 class="text-2xl font-black uppercase tracking-tight">New Drops</h2>
                 <a href="#" class="text-gray-400 text-sm hover:text-white">View All →</a>
             </div>
             
-            <?php if (!empty($servicesContent)): ?>
+            <?php if (!empty($galleryImages)): ?>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <?php foreach ($galleryImages as $index => $img): ?>
+                    <div class="group cursor-pointer">
+                        <div class="aspect-[3/4] rounded mb-3 relative overflow-hidden bg-white/5">
+                            <img src="../<?php echo htmlspecialchars($img['image_path']); ?>" 
+                                 alt="<?php echo htmlspecialchars($img['alt_text'] ?? 'Product ' . ($index + 1)); ?>"
+                                 class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+                            <div class="absolute top-2 left-2 text-xs px-2 py-1 rounded" style="background: <?php echo $secondaryColor; ?>;">NEW</div>
+                        </div>
+                        <h3 class="text-sm font-medium"><?php echo htmlspecialchars($img['alt_text'] ?? 'Product ' . ($index + 1)); ?></h3>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php elseif (!empty($servicesContent)): ?>
                 <div class="text-gray-400 text-center"><?php echo nl2br(htmlspecialchars($servicesContent)); ?></div>
             <?php else: ?>
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -719,11 +865,23 @@ $googleFontsUrl = getGoogleFontsUrl($fontHeading, $fontBody);
                 <p class="text-gray-400"><?php echo htmlspecialchars($site['contact_email']); ?></p>
             <?php endif; ?>
             
+            <?php if (!empty($socialLinks)): ?>
+            <div class="flex justify-center space-x-4 mt-6 social-icons-footer">
+                <?php foreach ($socialLinks as $link): ?>
+                <a href="<?php echo htmlspecialchars($link['url']); ?>" target="_blank" rel="noopener noreferrer" 
+                   title="<?php echo htmlspecialchars($link['label']); ?>"
+                   class="text-gray-500 hover:text-white cursor-pointer text-xl social-icon">
+                    <i class="<?php echo htmlspecialchars($link['icon']); ?>"></i>
+                </a>
+                <?php endforeach; ?>
+            </div>
+            <?php else: ?>
             <div class="flex justify-center space-x-6 mt-6">
                 <i class="fab fa-instagram text-gray-500 hover:text-white cursor-pointer text-xl"></i>
                 <i class="fab fa-tiktok text-gray-500 hover:text-white cursor-pointer text-xl"></i>
                 <i class="fab fa-twitter text-gray-500 hover:text-white cursor-pointer text-xl"></i>
             </div>
+            <?php endif; ?>
         </section>
 
         <!-- Footer -->
@@ -736,10 +894,16 @@ $googleFontsUrl = getGoogleFontsUrl($fontHeading, $fontBody);
     <div class="min-h-screen bg-white">
         <!-- Header -->
         <nav class="flex justify-between items-center py-4 px-4 md:px-8 max-w-6xl mx-auto sticky top-8 z-50 bg-white">
+            <?php if ($logoImage): ?>
+            <img src="../<?php echo htmlspecialchars($logoImage['image_path']); ?>" 
+                 alt="<?php echo htmlspecialchars($logoImage['alt_text'] ?? $siteName); ?>"
+                 class="h-10 w-auto object-contain">
+            <?php else: ?>
             <div class="flex items-center gap-2">
                 <div class="w-8 h-8 rounded-lg" style="background: linear-gradient(135deg, <?php echo $primaryColor; ?>, <?php echo $accentColor; ?>);"></div>
                 <span class="font-bold text-gray-900"><?php echo htmlspecialchars($siteName); ?></span>
             </div>
+            <?php endif; ?>
             <div class="hidden md:flex space-x-8 text-sm font-medium text-gray-600">
                 <a href="#home" class="hover:opacity-70">Home</a>
                 <a href="#features" class="hover:opacity-70">Features</a>
@@ -752,8 +916,15 @@ $googleFontsUrl = getGoogleFontsUrl($fontHeading, $fontBody);
         </nav>
 
         <!-- Hero -->
-        <section id="home" class="py-16 md:py-24 px-4 text-center" style="background: linear-gradient(180deg, <?php echo $primaryColor; ?>10, white);">
-            <div class="max-w-4xl mx-auto">
+        <section id="home" class="py-16 md:py-24 px-4 text-center relative overflow-hidden" style="background: linear-gradient(180deg, <?php echo $primaryColor; ?>10, white);">
+            <?php if ($heroImage): ?>
+            <div class="absolute inset-0">
+                <img src="../<?php echo htmlspecialchars($heroImage['image_path']); ?>" 
+                     alt="<?php echo htmlspecialchars($heroImage['alt_text'] ?? 'Hero Image'); ?>"
+                     class="w-full h-full object-cover opacity-20">
+            </div>
+            <?php endif; ?>
+            <div class="max-w-4xl mx-auto relative z-10">
                 <div class="inline-flex items-center gap-2 px-4 py-1 rounded-full text-sm mb-6" style="background: <?php echo $primaryColor; ?>15; color: <?php echo $primaryColor; ?>;">
                     <span class="w-2 h-2 rounded-full animate-pulse" style="background: <?php echo $primaryColor; ?>;"></span>
                     Welcome
@@ -774,15 +945,23 @@ $googleFontsUrl = getGoogleFontsUrl($fontHeading, $fontBody);
             </div>
         </section>
 
-        <!-- Dashboard Preview -->
+        <!-- Dashboard Preview / Gallery -->
         <div class="px-4 md:px-8 pb-16">
             <div class="max-w-4xl mx-auto rounded-2xl shadow-2xl p-4 md:p-8" style="background: linear-gradient(135deg, #1f2937, #111827);">
+                <?php if (!empty($galleryImages)): ?>
+                <div class="rounded-xl aspect-video overflow-hidden">
+                    <img src="../<?php echo htmlspecialchars($galleryImages[0]['image_path']); ?>" 
+                         alt="<?php echo htmlspecialchars($galleryImages[0]['alt_text'] ?? 'Product Preview'); ?>"
+                         class="w-full h-full object-cover">
+                </div>
+                <?php else: ?>
                 <div class="rounded-xl aspect-video flex items-center justify-center" style="background: #374151;">
                     <div class="text-center">
                         <i class="fas fa-chart-line text-5xl mb-3" style="color: <?php echo $primaryColor; ?>;"></i>
                         <p class="text-gray-500">Product Preview</p>
                     </div>
                 </div>
+                <?php endif; ?>
             </div>
         </div>
 
@@ -842,6 +1021,17 @@ $googleFontsUrl = getGoogleFontsUrl($fontHeading, $fontBody);
         <!-- Footer -->
         <footer class="py-10 px-4 bg-gray-900 text-center">
             <p class="text-white font-bold mb-2"><?php echo htmlspecialchars($siteName); ?></p>
+            <?php if (!empty($socialLinks)): ?>
+            <div class="flex justify-center items-center space-x-4 mb-3 social-icons-footer">
+                <?php foreach ($socialLinks as $link): ?>
+                <a href="<?php echo htmlspecialchars($link['url']); ?>" target="_blank" rel="noopener noreferrer" 
+                   title="<?php echo htmlspecialchars($link['label']); ?>"
+                   class="text-gray-400 hover:text-white social-icon">
+                    <i class="<?php echo htmlspecialchars($link['icon']); ?> text-lg"></i>
+                </a>
+                <?php endforeach; ?>
+            </div>
+            <?php endif; ?>
             <p class="text-gray-500 text-sm">&copy; <?php echo date('Y'); ?> All rights reserved. Powered by FilDevStudio</p>
         </footer>
     </div>
@@ -851,9 +1041,15 @@ $googleFontsUrl = getGoogleFontsUrl($fontHeading, $fontBody);
         <!-- Header -->
         <nav class="bg-white border-b sticky top-8 z-50">
             <div class="max-w-6xl mx-auto px-4 md:px-8 py-4 flex justify-between items-center">
+                <?php if ($logoImage): ?>
+                <img src="../<?php echo htmlspecialchars($logoImage['image_path']); ?>" 
+                     alt="<?php echo htmlspecialchars($logoImage['alt_text'] ?? $siteName); ?>"
+                     class="h-10 w-auto object-contain">
+                <?php else: ?>
                 <div class="text-xl md:text-2xl font-light tracking-widest" style="color: <?php echo $primaryColor; ?>;">
                     <?php echo htmlspecialchars(strtoupper($siteName)); ?>
                 </div>
+                <?php endif; ?>
                 <div class="hidden md:flex space-x-8 text-sm text-gray-500 tracking-wide">
                     <a href="#home" class="hover:text-gray-900">Home</a>
                     <a href="#about" class="hover:text-gray-900">Collection</a>
@@ -861,6 +1057,15 @@ $googleFontsUrl = getGoogleFontsUrl($fontHeading, $fontBody);
                     <a href="#contact" class="hover:text-gray-900">Contact</a>
                 </div>
                 <div class="flex items-center space-x-5 text-gray-400">
+                    <?php if (!empty($socialLinks)): ?>
+                    <div class="hidden md:flex items-center space-x-3 social-icons-header">
+                        <?php foreach (array_slice($socialLinks, 0, 3) as $link): ?>
+                        <a href="<?php echo htmlspecialchars($link['url']); ?>" target="_blank" rel="noopener noreferrer" title="<?php echo htmlspecialchars($link['label']); ?>" class="social-icon hover:text-gray-600">
+                            <i class="<?php echo htmlspecialchars($link['icon']); ?>"></i>
+                        </a>
+                        <?php endforeach; ?>
+                    </div>
+                    <?php endif; ?>
                     <i class="fas fa-search cursor-pointer hover:text-gray-600"></i>
                     <i class="fas fa-heart cursor-pointer hover:text-gray-600"></i>
                     <i class="fas fa-shopping-bag cursor-pointer hover:text-gray-600"></i>
@@ -869,8 +1074,15 @@ $googleFontsUrl = getGoogleFontsUrl($fontHeading, $fontBody);
         </nav>
 
         <!-- Hero -->
-        <section id="home" class="py-16 md:py-24 px-4 text-center relative" style="background: linear-gradient(135deg, <?php echo $primaryColor; ?>10, <?php echo $accentColor; ?>10);">
-            <div class="max-w-4xl mx-auto">
+        <section id="home" class="py-16 md:py-24 px-4 text-center relative overflow-hidden" style="background: linear-gradient(135deg, <?php echo $primaryColor; ?>10, <?php echo $accentColor; ?>10);">
+            <?php if ($heroImage): ?>
+            <div class="absolute inset-0">
+                <img src="../<?php echo htmlspecialchars($heroImage['image_path']); ?>" 
+                     alt="<?php echo htmlspecialchars($heroImage['alt_text'] ?? 'Hero Image'); ?>"
+                     class="w-full h-full object-cover opacity-30">
+            </div>
+            <?php endif; ?>
+            <div class="max-w-4xl mx-auto relative z-10">
                 <p class="text-sm tracking-widest mb-6" style="color: <?php echo $primaryColor; ?>;">✦ NEW COLLECTION ✦</p>
                 <h1 class="text-4xl md:text-6xl font-light tracking-wide mb-6" style="font-family: 'Playfair Display', serif; color: <?php echo $secondaryColor; ?>;">
                     <?php echo htmlspecialchars($heroTitle); ?>
@@ -896,7 +1108,20 @@ $googleFontsUrl = getGoogleFontsUrl($fontHeading, $fontBody);
             <div class="max-w-6xl mx-auto">
                 <h2 class="text-2xl font-light tracking-wide text-center mb-12" style="font-family: 'Playfair Display', serif; color: <?php echo $primaryColor; ?>;">Featured Collection</h2>
                 
-                <?php if (!empty($servicesContent)): ?>
+                <?php if (!empty($galleryImages)): ?>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+                        <?php foreach ($galleryImages as $index => $img): ?>
+                        <div class="bg-white p-6 text-center group cursor-pointer hover:shadow-lg transition">
+                            <div class="aspect-square mb-4 overflow-hidden">
+                                <img src="../<?php echo htmlspecialchars($img['image_path']); ?>" 
+                                     alt="<?php echo htmlspecialchars($img['alt_text'] ?? 'Product ' . ($index + 1)); ?>"
+                                     class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+                            </div>
+                            <p class="text-sm tracking-wide mb-1"><?php echo htmlspecialchars($img['alt_text'] ?? 'Product ' . ($index + 1)); ?></p>
+                        </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php elseif (!empty($servicesContent)): ?>
                     <div class="max-w-3xl mx-auto text-center text-gray-600 leading-relaxed"><?php echo nl2br(htmlspecialchars($servicesContent)); ?></div>
                 <?php else: ?>
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
@@ -945,6 +1170,17 @@ $googleFontsUrl = getGoogleFontsUrl($fontHeading, $fontBody);
         <!-- Footer -->
         <footer class="py-10 px-4 text-center" style="background: <?php echo $secondaryColor; ?>;">
             <p class="text-white/90 text-sm tracking-widest mb-2"><?php echo htmlspecialchars(strtoupper($siteName)); ?></p>
+            <?php if (!empty($socialLinks)): ?>
+            <div class="flex justify-center items-center space-x-4 mb-3 social-icons-footer">
+                <?php foreach ($socialLinks as $link): ?>
+                <a href="<?php echo htmlspecialchars($link['url']); ?>" target="_blank" rel="noopener noreferrer" 
+                   title="<?php echo htmlspecialchars($link['label']); ?>"
+                   class="text-white/60 hover:text-white social-icon">
+                    <i class="<?php echo htmlspecialchars($link['icon']); ?>"></i>
+                </a>
+                <?php endforeach; ?>
+            </div>
+            <?php endif; ?>
             <p class="text-white/50 text-xs">&copy; <?php echo date('Y'); ?> All rights reserved. Powered by FilDevStudio</p>
         </footer>
     </div>
@@ -954,9 +1190,15 @@ $googleFontsUrl = getGoogleFontsUrl($fontHeading, $fontBody);
         <!-- Header -->
         <nav class="border-b border-white/10 sticky top-8 z-50" style="background: <?php echo $primaryColor; ?>;">
             <div class="max-w-6xl mx-auto px-4 md:px-8 py-4 flex justify-between items-center">
+                <?php if ($logoImage): ?>
+                <img src="../<?php echo htmlspecialchars($logoImage['image_path']); ?>" 
+                     alt="<?php echo htmlspecialchars($logoImage['alt_text'] ?? $siteName); ?>"
+                     class="h-10 w-auto object-contain">
+                <?php else: ?>
                 <div class="text-xl md:text-2xl font-bold tracking-tight text-white">
                     <?php echo htmlspecialchars($siteName); ?>
                 </div>
+                <?php endif; ?>
                 <div class="hidden md:flex space-x-8 text-sm text-gray-400">
                     <a href="#home" class="hover:text-white">Home</a>
                     <a href="#about" class="hover:text-white">About</a>
@@ -976,8 +1218,15 @@ $googleFontsUrl = getGoogleFontsUrl($fontHeading, $fontBody);
         </nav>
 
         <!-- Hero -->
-        <section id="home" class="py-16 md:py-20 px-4 text-center" style="background: linear-gradient(135deg, <?php echo $secondaryColor; ?>, <?php echo $primaryColor; ?>);">
-            <div class="max-w-4xl mx-auto">
+        <section id="home" class="py-16 md:py-20 px-4 text-center relative overflow-hidden" style="background: linear-gradient(135deg, <?php echo $secondaryColor; ?>, <?php echo $primaryColor; ?>);">
+            <?php if ($heroImage): ?>
+            <div class="absolute inset-0">
+                <img src="../<?php echo htmlspecialchars($heroImage['image_path']); ?>" 
+                     alt="<?php echo htmlspecialchars($heroImage['alt_text'] ?? 'Hero Image'); ?>"
+                     class="w-full h-full object-cover opacity-30">
+            </div>
+            <?php endif; ?>
+            <div class="max-w-4xl mx-auto relative z-10">
                 <p class="text-sm mb-4" style="color: <?php echo $accentColor; ?>;">🔥 HOT DEALS THIS WEEK</p>
                 <h1 class="text-4xl md:text-5xl font-bold text-white mb-6"><?php echo htmlspecialchars($heroTitle); ?></h1>
                 <p class="text-gray-400 text-lg mb-8 max-w-xl mx-auto"><?php echo htmlspecialchars($heroSubtitle); ?></p>
@@ -1001,7 +1250,20 @@ $googleFontsUrl = getGoogleFontsUrl($fontHeading, $fontBody);
             <div class="max-w-6xl mx-auto">
                 <h2 class="text-2xl font-bold text-white text-center mb-12">Featured Products</h2>
                 
-                <?php if (!empty($servicesContent)): ?>
+                <?php if (!empty($galleryImages)): ?>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <?php foreach ($galleryImages as $index => $img): ?>
+                        <div class="p-4 rounded-lg" style="background: <?php echo $primaryColor; ?>;">
+                            <div class="aspect-square mb-3 rounded overflow-hidden">
+                                <img src="../<?php echo htmlspecialchars($img['image_path']); ?>" 
+                                     alt="<?php echo htmlspecialchars($img['alt_text'] ?? 'Product ' . ($index + 1)); ?>"
+                                     class="w-full h-full object-cover hover:scale-105 transition duration-300">
+                            </div>
+                            <p class="text-sm text-white mb-1"><?php echo htmlspecialchars($img['alt_text'] ?? 'Product ' . ($index + 1)); ?></p>
+                        </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php elseif (!empty($servicesContent)): ?>
                     <div class="max-w-3xl mx-auto text-center text-gray-400 leading-relaxed"><?php echo nl2br(htmlspecialchars($servicesContent)); ?></div>
                 <?php else: ?>
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -1050,6 +1312,17 @@ $googleFontsUrl = getGoogleFontsUrl($fontHeading, $fontBody);
         <!-- Footer -->
         <footer class="py-8 px-4 text-center border-t border-white/10" style="background: <?php echo $secondaryColor; ?>;">
             <p class="text-white font-bold mb-2"><?php echo htmlspecialchars($siteName); ?></p>
+            <?php if (!empty($socialLinks)): ?>
+            <div class="flex justify-center items-center space-x-4 mb-3 social-icons-footer">
+                <?php foreach ($socialLinks as $link): ?>
+                <a href="<?php echo htmlspecialchars($link['url']); ?>" target="_blank" rel="noopener noreferrer" 
+                   title="<?php echo htmlspecialchars($link['label']); ?>"
+                   class="text-gray-500 hover:text-white social-icon">
+                    <i class="<?php echo htmlspecialchars($link['icon']); ?>"></i>
+                </a>
+                <?php endforeach; ?>
+            </div>
+            <?php endif; ?>
             <p class="text-gray-500 text-xs">&copy; <?php echo date('Y'); ?> All rights reserved. Powered by FilDevStudio</p>
         </footer>
     </div>
@@ -1059,9 +1332,15 @@ $googleFontsUrl = getGoogleFontsUrl($fontHeading, $fontBody);
         <!-- Header -->
         <nav class="sticky top-8 z-50" style="background: <?php echo $primaryColor; ?>;">
             <div class="max-w-6xl mx-auto px-4 md:px-8 py-4 flex justify-between items-center">
+                <?php if ($logoImage): ?>
+                <img src="../<?php echo htmlspecialchars($logoImage['image_path']); ?>" 
+                     alt="<?php echo htmlspecialchars($logoImage['alt_text'] ?? $siteName); ?>"
+                     class="h-10 w-auto object-contain bg-white/10 rounded px-2">
+                <?php else: ?>
                 <div class="text-xl md:text-2xl font-bold text-white flex items-center gap-2">
                     🛒 <?php echo htmlspecialchars($siteName); ?>
                 </div>
+                <?php endif; ?>
                 <div class="hidden md:flex space-x-8 text-sm text-white/80">
                     <a href="#home" class="hover:text-white">Home</a>
                     <a href="#about" class="hover:text-white">About</a>
@@ -1084,8 +1363,15 @@ $googleFontsUrl = getGoogleFontsUrl($fontHeading, $fontBody);
         </nav>
 
         <!-- Hero -->
-        <section id="home" class="py-12 md:py-16 px-4 text-center" style="background: linear-gradient(135deg, <?php echo $primaryColor; ?>15, <?php echo $accentColor; ?>15);">
-            <div class="max-w-4xl mx-auto">
+        <section id="home" class="py-12 md:py-16 px-4 text-center relative overflow-hidden" style="background: linear-gradient(135deg, <?php echo $primaryColor; ?>15, <?php echo $accentColor; ?>15);">
+            <?php if ($heroImage): ?>
+            <div class="absolute inset-0">
+                <img src="../<?php echo htmlspecialchars($heroImage['image_path']); ?>" 
+                     alt="<?php echo htmlspecialchars($heroImage['alt_text'] ?? 'Hero Image'); ?>"
+                     class="w-full h-full object-cover opacity-20">
+            </div>
+            <?php endif; ?>
+            <div class="max-w-4xl mx-auto relative z-10">
                 <p class="inline-block px-4 py-1 rounded-full text-sm mb-4" style="background: <?php echo $accentColor; ?>; color: white;">🏷️ DAILY DEALS - UP TO 50% OFF!</p>
                 <h1 class="text-3xl md:text-5xl font-bold mb-4" style="color: <?php echo $secondaryColor; ?>;"><?php echo htmlspecialchars($heroTitle); ?></h1>
                 <p class="text-gray-600 text-lg mb-8 max-w-xl mx-auto"><?php echo htmlspecialchars($heroSubtitle); ?></p>
@@ -1109,7 +1395,20 @@ $googleFontsUrl = getGoogleFontsUrl($fontHeading, $fontBody);
             <div class="max-w-6xl mx-auto">
                 <h2 class="text-2xl font-bold text-center mb-12" style="color: <?php echo $primaryColor; ?>;">Fresh Products</h2>
                 
-                <?php if (!empty($servicesContent)): ?>
+                <?php if (!empty($galleryImages)): ?>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <?php foreach ($galleryImages as $index => $img): ?>
+                        <div class="p-4 rounded-xl text-center cursor-pointer hover:shadow-md transition bg-white">
+                            <div class="aspect-square mb-3 rounded-lg overflow-hidden">
+                                <img src="../<?php echo htmlspecialchars($img['image_path']); ?>" 
+                                     alt="<?php echo htmlspecialchars($img['alt_text'] ?? 'Product ' . ($index + 1)); ?>"
+                                     class="w-full h-full object-cover hover:scale-105 transition duration-300">
+                            </div>
+                            <p class="font-medium text-gray-800"><?php echo htmlspecialchars($img['alt_text'] ?? 'Product ' . ($index + 1)); ?></p>
+                        </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php elseif (!empty($servicesContent)): ?>
                     <div class="max-w-3xl mx-auto text-center text-gray-600 leading-relaxed"><?php echo nl2br(htmlspecialchars($servicesContent)); ?></div>
                 <?php else: ?>
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -1156,11 +1455,22 @@ $googleFontsUrl = getGoogleFontsUrl($fontHeading, $fontBody);
         <!-- Footer -->
         <footer class="py-8 px-4 text-center" style="background: <?php echo $secondaryColor; ?>;">
             <p class="text-white font-bold mb-2">🛒 <?php echo htmlspecialchars($siteName); ?></p>
+            <?php if (!empty($socialLinks)): ?>
+            <div class="flex justify-center items-center space-x-4 mb-3 social-icons-footer">
+                <?php foreach ($socialLinks as $link): ?>
+                <a href="<?php echo htmlspecialchars($link['url']); ?>" target="_blank" rel="noopener noreferrer" 
+                   title="<?php echo htmlspecialchars($link['label']); ?>"
+                   class="text-white/70 hover:text-white social-icon">
+                    <i class="<?php echo htmlspecialchars($link['icon']); ?>"></i>
+                </a>
+                <?php endforeach; ?>
+            </div>
+            <?php endif; ?>
             <p class="text-white/60 text-xs">&copy; <?php echo date('Y'); ?> All rights reserved. Powered by FilDevStudio</p>
         </footer>
     </div>
 
-    <?php elseif ($templateId == 12): // ========== SARI-SARI STORE ========== ?>
+    <?php elseif ($templateId == 1): // ========== SARI-SARI STORE ========== ?>
     <div class="min-h-screen" style="background: linear-gradient(180deg, <?php echo $primaryColor; ?>, <?php echo $accentColor; ?>);">
         <!-- Header -->
         <nav class="sticky top-8 z-50" style="background: <?php echo $primaryColor; ?>;">
@@ -1277,6 +1587,17 @@ $googleFontsUrl = getGoogleFontsUrl($fontHeading, $fontBody);
         <!-- Footer -->
         <footer class="py-8 px-4 text-center" style="background: <?php echo $secondaryColor; ?>;">
             <p class="text-white font-bold mb-2">🏪 <?php echo htmlspecialchars($siteName); ?></p>
+            <?php if (!empty($socialLinks)): ?>
+            <div class="flex justify-center items-center space-x-4 mb-3 social-icons-footer">
+                <?php foreach ($socialLinks as $link): ?>
+                <a href="<?php echo htmlspecialchars($link['url']); ?>" target="_blank" rel="noopener noreferrer" 
+                   title="<?php echo htmlspecialchars($link['label']); ?>"
+                   class="text-white/70 hover:text-white social-icon">
+                    <i class="<?php echo htmlspecialchars($link['icon']); ?>"></i>
+                </a>
+                <?php endforeach; ?>
+            </div>
+            <?php endif; ?>
             <p class="text-white/60 text-xs">&copy; <?php echo date('Y'); ?> Lahat ng karapatan ay nakalaan. Powered by FilDevStudio</p>
         </footer>
     </div>
@@ -1286,9 +1607,15 @@ $googleFontsUrl = getGoogleFontsUrl($fontHeading, $fontBody);
         <!-- Header -->
         <nav class="sticky top-8 z-50 shadow-sm" style="background: <?php echo $primaryColor; ?>;">
             <div class="max-w-6xl mx-auto px-4 md:px-8 py-4 flex justify-between items-center">
+                <?php if ($logoImage): ?>
+                <img src="../<?php echo htmlspecialchars($logoImage['image_path']); ?>" 
+                     alt="<?php echo htmlspecialchars($logoImage['alt_text'] ?? $siteName); ?>"
+                     class="h-10 w-auto object-contain bg-white/10 rounded px-2">
+                <?php else: ?>
                 <div class="text-xl md:text-2xl font-bold text-white flex items-center gap-2">
                     🛒 <?php echo htmlspecialchars($siteName); ?>
                 </div>
+                <?php endif; ?>
                 <div class="hidden md:flex space-x-6 text-sm text-white/80">
                     <a href="#home" class="hover:text-white">Home</a>
                     <a href="#about" class="hover:text-white">About</a>
@@ -1308,8 +1635,15 @@ $googleFontsUrl = getGoogleFontsUrl($fontHeading, $fontBody);
         </nav>
 
         <!-- Hero -->
-        <section id="home" class="py-12 md:py-16 px-4 text-center" style="background: linear-gradient(135deg, <?php echo $primaryColor; ?>15, <?php echo $accentColor; ?>15);">
-            <div class="max-w-4xl mx-auto">
+        <section id="home" class="py-12 md:py-16 px-4 text-center relative overflow-hidden" style="background: linear-gradient(135deg, <?php echo $primaryColor; ?>15, <?php echo $accentColor; ?>15);">
+            <?php if ($heroImage): ?>
+            <div class="absolute inset-0">
+                <img src="../<?php echo htmlspecialchars($heroImage['image_path']); ?>" 
+                     alt="<?php echo htmlspecialchars($heroImage['alt_text'] ?? 'Hero Image'); ?>"
+                     class="w-full h-full object-cover opacity-20">
+            </div>
+            <?php endif; ?>
+            <div class="max-w-4xl mx-auto relative z-10">
                 <div class="flex flex-wrap justify-center gap-2 mb-6">
                     <span class="px-3 py-1 rounded-full text-xs font-medium" style="background: <?php echo $primaryColor; ?>15; color: <?php echo $primaryColor; ?>;">💳 GCash</span>
                     <span class="px-3 py-1 rounded-full text-xs font-medium" style="background: <?php echo $accentColor; ?>15; color: <?php echo $accentColor; ?>;">🚚 Delivery</span>
@@ -1342,7 +1676,20 @@ $googleFontsUrl = getGoogleFontsUrl($fontHeading, $fontBody);
             <div class="max-w-6xl mx-auto">
                 <h2 class="text-2xl font-bold text-center mb-12" style="color: <?php echo $primaryColor; ?>;">Our Products & Services</h2>
                 
-                <?php if (!empty($servicesContent)): ?>
+                <?php if (!empty($galleryImages)): ?>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <?php foreach ($galleryImages as $index => $img): ?>
+                        <div class="p-4 rounded-xl text-center hover:shadow-md transition bg-white">
+                            <div class="aspect-square mb-3 rounded-lg overflow-hidden">
+                                <img src="../<?php echo htmlspecialchars($img['image_path']); ?>" 
+                                     alt="<?php echo htmlspecialchars($img['alt_text'] ?? 'Product ' . ($index + 1)); ?>"
+                                     class="w-full h-full object-cover hover:scale-105 transition duration-300">
+                            </div>
+                            <p class="font-bold text-gray-800"><?php echo htmlspecialchars($img['alt_text'] ?? 'Product ' . ($index + 1)); ?></p>
+                        </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php elseif (!empty($servicesContent)): ?>
                     <div class="max-w-3xl mx-auto text-center text-gray-600 leading-relaxed"><?php echo nl2br(htmlspecialchars($servicesContent)); ?></div>
                 <?php else: ?>
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -1392,6 +1739,17 @@ $googleFontsUrl = getGoogleFontsUrl($fontHeading, $fontBody);
         <!-- Footer -->
         <footer class="py-8 px-4 text-center" style="background: <?php echo $secondaryColor; ?>;">
             <p class="text-white font-bold mb-2">🛒 <?php echo htmlspecialchars($siteName); ?></p>
+            <?php if (!empty($socialLinks)): ?>
+            <div class="flex justify-center items-center space-x-4 mb-3 social-icons-footer">
+                <?php foreach ($socialLinks as $link): ?>
+                <a href="<?php echo htmlspecialchars($link['url']); ?>" target="_blank" rel="noopener noreferrer" 
+                   title="<?php echo htmlspecialchars($link['label']); ?>"
+                   class="text-white/70 hover:text-white social-icon">
+                    <i class="<?php echo htmlspecialchars($link['icon']); ?>"></i>
+                </a>
+                <?php endforeach; ?>
+            </div>
+            <?php endif; ?>
             <p class="text-white/60 text-xs">&copy; <?php echo date('Y'); ?> All rights reserved. Powered by FilDevStudio</p>
         </footer>
     </div>
@@ -1401,10 +1759,16 @@ $googleFontsUrl = getGoogleFontsUrl($fontHeading, $fontBody);
         <!-- Header -->
         <nav class="bg-white shadow-sm sticky top-8 z-50">
             <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+                <?php if ($logoImage): ?>
+                <img src="../<?php echo htmlspecialchars($logoImage['image_path']); ?>" 
+                     alt="<?php echo htmlspecialchars($logoImage['alt_text'] ?? $siteName); ?>"
+                     class="h-10 w-auto object-contain">
+                <?php else: ?>
                 <div class="flex items-center gap-2">
                     <div class="w-8 h-8 rounded-full" style="background: linear-gradient(135deg, <?php echo $primaryColor; ?>, <?php echo $accentColor; ?>);"></div>
                     <span class="font-bold text-gray-900"><?php echo htmlspecialchars($siteName); ?></span>
                 </div>
+                <?php endif; ?>
                 <div class="hidden md:flex space-x-8 text-sm font-medium text-gray-600">
                     <a href="#home" class="hover:opacity-70">Home</a>
                     <a href="#about" class="hover:opacity-70">About</a>
@@ -1418,8 +1782,15 @@ $googleFontsUrl = getGoogleFontsUrl($fontHeading, $fontBody);
         </nav>
 
         <!-- Hero -->
-        <section id="home" class="py-16 md:py-24 px-4 text-center" style="background: linear-gradient(135deg, <?php echo $primaryColor; ?>15, <?php echo $accentColor; ?>10);">
-            <div class="max-w-4xl mx-auto">
+        <section id="home" class="py-16 md:py-24 px-4 text-center relative overflow-hidden" style="background: linear-gradient(135deg, <?php echo $primaryColor; ?>15, <?php echo $accentColor; ?>10);">
+            <?php if ($heroImage): ?>
+            <div class="absolute inset-0">
+                <img src="../<?php echo htmlspecialchars($heroImage['image_path']); ?>" 
+                     alt="<?php echo htmlspecialchars($heroImage['alt_text'] ?? 'Hero Image'); ?>"
+                     class="w-full h-full object-cover opacity-20">
+            </div>
+            <?php endif; ?>
+            <div class="max-w-4xl mx-auto relative z-10">
                 <span class="inline-block px-4 py-1 rounded-full text-sm font-medium mb-4" style="background: <?php echo $primaryColor; ?>15; color: <?php echo $primaryColor; ?>;">
                     ✨ Welcome
                 </span>
@@ -1451,7 +1822,20 @@ $googleFontsUrl = getGoogleFontsUrl($fontHeading, $fontBody);
             <div class="max-w-5xl mx-auto">
                 <h2 class="text-3xl font-bold text-center mb-8" style="color: <?php echo $primaryColor; ?>;">Our Services</h2>
                 
-                <?php if (!empty($servicesContent)): ?>
+                <?php if (!empty($galleryImages)): ?>
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-6">
+                        <?php foreach ($galleryImages as $index => $img): ?>
+                        <div class="text-center p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition">
+                            <div class="aspect-square mb-4 rounded-lg overflow-hidden">
+                                <img src="../<?php echo htmlspecialchars($img['image_path']); ?>" 
+                                     alt="<?php echo htmlspecialchars($img['alt_text'] ?? 'Service ' . ($index + 1)); ?>"
+                                     class="w-full h-full object-cover hover:scale-105 transition duration-300">
+                            </div>
+                            <h3 class="font-semibold mb-2"><?php echo htmlspecialchars($img['alt_text'] ?? 'Service ' . ($index + 1)); ?></h3>
+                        </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php elseif (!empty($servicesContent)): ?>
                     <div class="max-w-3xl mx-auto text-center text-gray-600"><?php echo nl2br(htmlspecialchars($servicesContent)); ?></div>
                 <?php else: ?>
                     <div class="grid md:grid-cols-3 gap-6">
@@ -1505,11 +1889,24 @@ $googleFontsUrl = getGoogleFontsUrl($fontHeading, $fontBody);
         <footer class="py-10 px-4 text-white" style="background: <?php echo $primaryColor; ?>;">
             <div class="max-w-6xl mx-auto text-center">
                 <p class="font-bold text-lg mb-2"><?php echo htmlspecialchars($siteName); ?></p>
+                <?php if (!empty($socialLinks)): ?>
+                <div class="flex justify-center items-center space-x-4 mb-3 social-icons-footer">
+                    <?php foreach ($socialLinks as $link): ?>
+                    <a href="<?php echo htmlspecialchars($link['url']); ?>" target="_blank" rel="noopener noreferrer" 
+                       title="<?php echo htmlspecialchars($link['label']); ?>"
+                       class="w-10 h-10 flex items-center justify-center bg-white/20 hover:bg-white/30 rounded-full transition social-icon">
+                        <i class="<?php echo htmlspecialchars($link['icon']); ?> text-lg"></i>
+                    </a>
+                    <?php endforeach; ?>
+                </div>
+                <?php endif; ?>
                 <p class="text-white/60 text-sm">&copy; <?php echo date('Y'); ?> All rights reserved. Powered by FilDevStudio</p>
             </div>
         </footer>
     </div>
-    <?php endif; ?>
+    <?php endif; // End of template ID check ?>
+    
+    <?php endif; // End of modular template check ?>
 
     <script>
         // Smooth scroll

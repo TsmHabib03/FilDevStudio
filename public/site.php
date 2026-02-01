@@ -3,13 +3,15 @@
  * Public Site Viewer - Template-Based Rendering
  * Renders published client sites accessible via subdomain
  * URL: public/site.php?s={subdomain}
+ * Admin Preview: public/site.php?s={subdomain}&preview=1 (requires admin login)
  */
 
 // Get subdomain from URL parameter
 $subdomain = isset($_GET['s']) ? trim($_GET['s']) : '';
+$isPreviewMode = isset($_GET['preview']) && $_GET['preview'] == '1';
 
-// Validate subdomain format (basic check)
-if (empty($subdomain) || !preg_match('/^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$/', $subdomain)) {
+// Validate subdomain format (allow letters, numbers, hyphens, and underscores)
+if (empty($subdomain) || !preg_match('/^[a-z0-9_-]+$/i', $subdomain)) {
     http_response_code(404);
     include(__DIR__ . '/404.php');
     exit;
@@ -18,10 +20,21 @@ if (empty($subdomain) || !preg_match('/^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$/'
 require_once '../config/database.php';
 require_once '../includes/functions.php';
 
-// Get site data by subdomain (only active sites)
+// Check if admin preview mode
+$requireActive = true;
+if ($isPreviewMode) {
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+    if (isset($_SESSION['user_id']) && isset($_SESSION['role']) && $_SESSION['role'] === 'admin') {
+        $requireActive = false; // Admins can preview any site
+    }
+}
+
+// Get site data by subdomain
 try {
     $pdo = getConnection();
-    $site = getSiteBySubdomain($pdo, $subdomain, true);
+    $site = getSiteBySubdomain($pdo, $subdomain, $requireActive);
     
     if (!$site) {
         http_response_code(404);
@@ -42,6 +55,13 @@ try {
     exit;
 }
 
+// Check if site has a custom full HTML override (from developer workspace)
+if (!empty($site['custom_full_html'])) {
+    // Output the custom full HTML directly
+    echo $site['custom_full_html'];
+    exit;
+}
+
 $templateId = $site['template_id'] ?? 1;
 $primaryColor = $site['primary_color'] ?? '#3B82F6';
 $secondaryColor = $site['secondary_color'] ?? '#1E40AF';
@@ -54,6 +74,9 @@ $heroSubtitle = $site['hero_subtitle'] ?? 'We provide excellent products and ser
 $aboutContent = $site['about_content'] ?? 'We are a dedicated team committed to providing the best products and services to our customers.';
 $servicesContent = $site['services_content'] ?? '';
 $contactInfo = $site['contact_info'] ?? '';
+
+// Get social media links
+$socialLinks = getSocialLinks($site);
 
 // Get font CSS families
 $headingFontFamily = getFontFamily($fontHeading);
@@ -99,11 +122,28 @@ $imageBasePath = '../';
         /* Apply fonts globally */
         h1, h2, h3, h4, h5, h6, nav a { font-family: <?php echo $headingFontFamily; ?>; }
         body, p, span, li, div { font-family: <?php echo $bodyFontFamily; ?>; }
+        /* Social icon styles */
+        .social-icon { transition: all 0.3s ease; }
+        .social-icon:hover { transform: scale(1.15); }
+        .social-icons-header a { color: inherit; opacity: 0.7; transition: all 0.2s ease; }
+        .social-icons-header a:hover { opacity: 1; }
+        .social-icons-footer a { transition: all 0.3s ease; }
+        .social-icons-footer a:hover { transform: translateY(-3px); }
     </style>
 </head>
 <body class="font-body">
 
-    <?php if ($templateId == 1): // ========== MODERN RETAIL ========== ?>
+    <?php 
+    // Check if modular template file exists
+    $templateFile = __DIR__ . '/templates/template-' . $templateId . '.php';
+    $useModularTemplate = file_exists($templateFile) && $templateId >= 1 && $templateId <= 5;
+    
+    if ($useModularTemplate):
+        include $templateFile;
+    else:
+    ?>
+
+    <?php if ($templateId == 4): // ========== SMALL RETAIL SHOP ========== ?>
     <div class="min-h-screen" style="background: #FAFAFA;">
         <!-- Header -->
         <nav class="bg-white border-b sticky top-0 z-50">
@@ -118,6 +158,26 @@ $imageBasePath = '../';
                 </div>
                 <?php endif; ?>
                 <div class="hidden md:flex space-x-8 text-sm font-medium text-gray-600">
+                    <a href="#home" class="hover:text-gray-900">Home</a>
+                    <a href="#about" class="hover:text-gray-900">About</a>
+                    <a href="#services" class="hover:text-gray-900">Services</a>
+                    <a href="#contact" class="hover:text-gray-900">Contact</a>
+                </div>
+                <div class="flex items-center space-x-4 text-gray-600">
+                    <?php if (!empty($socialLinks)): ?>
+                    <div class="hidden md:flex items-center space-x-3 social-icons-header">
+                        <?php foreach (array_slice($socialLinks, 0, 4) as $link): ?>
+                        <a href="<?php echo htmlspecialchars($link['url']); ?>" target="_blank" rel="noopener noreferrer" title="<?php echo htmlspecialchars($link['label']); ?>" class="social-icon">
+                            <i class="<?php echo htmlspecialchars($link['icon']); ?>"></i>
+                        </a>
+                        <?php endforeach; ?>
+                    </div>
+                    <?php endif; ?>
+                    <i class="fas fa-search cursor-pointer hover:text-gray-900"></i>
+                    <i class="fas fa-shopping-bag cursor-pointer hover:text-gray-900"></i>
+                </div>
+            </div>
+        </nav>
                     <a href="#home" class="hover:text-gray-900">Home</a>
                     <a href="#about" class="hover:text-gray-900">About</a>
                     <a href="#services" class="hover:text-gray-900">Services</a>
@@ -244,6 +304,15 @@ $imageBasePath = '../';
 
         <!-- Footer -->
         <footer class="py-8 px-4 text-center text-sm text-gray-500 border-t">
+            <?php if (!empty($socialLinks)): ?>
+            <div class="flex justify-center space-x-4 mb-4 social-icons-footer">
+                <?php foreach ($socialLinks as $link): ?>
+                <a href="<?php echo htmlspecialchars($link['url']); ?>" target="_blank" rel="noopener noreferrer" title="<?php echo htmlspecialchars($link['label']); ?>" class="social-icon" style="--social-color: <?php echo htmlspecialchars($link['color']); ?>">
+                    <i class="<?php echo htmlspecialchars($link['icon']); ?>"></i>
+                </a>
+                <?php endforeach; ?>
+            </div>
+            <?php endif; ?>
             <p>&copy; <?php echo date('Y'); ?> <?php echo htmlspecialchars($siteName); ?>. All rights reserved.</p>
         </footer>
     </div>
@@ -268,9 +337,20 @@ $imageBasePath = '../';
                     <a href="#menu" class="hover:text-amber-400">Menu</a>
                     <a href="#contact" class="hover:text-amber-400">Contact</a>
                 </div>
-                <a href="#contact" class="px-4 py-2 text-sm font-medium rounded" style="background: <?php echo $accentColor; ?>; color: #1a1a1a;">
-                    Reserve
-                </a>
+                <div class="flex items-center space-x-4">
+                    <?php if (!empty($socialLinks)): ?>
+                    <div class="hidden md:flex items-center space-x-3 social-icons-header">
+                        <?php foreach (array_slice($socialLinks, 0, 3) as $link): ?>
+                        <a href="<?php echo htmlspecialchars($link['url']); ?>" target="_blank" rel="noopener noreferrer" title="<?php echo htmlspecialchars($link['label']); ?>" class="social-icon text-white hover:text-amber-400">
+                            <i class="<?php echo htmlspecialchars($link['icon']); ?>"></i>
+                        </a>
+                        <?php endforeach; ?>
+                    </div>
+                    <?php endif; ?>
+                    <a href="#contact" class="px-4 py-2 text-sm font-medium rounded" style="background: <?php echo $accentColor; ?>; color: #1a1a1a;">
+                        Reserve
+                    </a>
+                </div>
             </div>
         </nav>
 
@@ -358,11 +438,20 @@ $imageBasePath = '../';
 
         <!-- Footer -->
         <footer class="py-8 px-4 text-center text-sm text-gray-500 border-t border-gray-800">
+            <?php if (!empty($socialLinks)): ?>
+            <div class="flex justify-center space-x-4 mb-4 social-icons-footer">
+                <?php foreach ($socialLinks as $link): ?>
+                <a href="<?php echo htmlspecialchars($link['url']); ?>" target="_blank" rel="noopener noreferrer" title="<?php echo htmlspecialchars($link['label']); ?>" class="social-icon text-gray-400" style="--social-color: <?php echo htmlspecialchars($link['color']); ?>">
+                    <i class="<?php echo htmlspecialchars($link['icon']); ?>"></i>
+                </a>
+                <?php endforeach; ?>
+            </div>
+            <?php endif; ?>
             <p>&copy; <?php echo date('Y'); ?> <?php echo htmlspecialchars($siteName); ?>. All rights reserved.</p>
         </footer>
     </div>
 
-    <?php elseif ($templateId == 3): // ========== FREELANCER PORTFOLIO ========== ?>
+    <?php elseif ($templateId == 5): // ========== FREELANCER PORTFOLIO ========== ?>
     <div class="min-h-screen bg-white">
         <!-- Header -->
         <nav class="bg-white shadow-sm sticky top-0 z-50">
@@ -381,9 +470,20 @@ $imageBasePath = '../';
                     <a href="#work" class="hover:text-gray-900">Work</a>
                     <a href="#contact" class="hover:text-gray-900">Contact</a>
                 </div>
-                <a href="#contact" class="px-4 py-2 text-sm text-white font-medium rounded" style="background: <?php echo $primaryColor; ?>;">
-                    Hire Me
-                </a>
+                <div class="flex items-center space-x-4">
+                    <?php if (!empty($socialLinks)): ?>
+                    <div class="hidden md:flex items-center space-x-3 social-icons-header">
+                        <?php foreach (array_slice($socialLinks, 0, 4) as $link): ?>
+                        <a href="<?php echo htmlspecialchars($link['url']); ?>" target="_blank" rel="noopener noreferrer" title="<?php echo htmlspecialchars($link['label']); ?>" class="social-icon">
+                            <i class="<?php echo htmlspecialchars($link['icon']); ?>"></i>
+                        </a>
+                        <?php endforeach; ?>
+                    </div>
+                    <?php endif; ?>
+                    <a href="#contact" class="px-4 py-2 text-sm text-white font-medium rounded" style="background: <?php echo $primaryColor; ?>;">
+                        Hire Me
+                    </a>
+                </div>
             </div>
         </nav>
 
@@ -457,11 +557,20 @@ $imageBasePath = '../';
 
         <!-- Footer -->
         <footer class="py-8 px-4 text-center text-sm text-gray-500 border-t">
+            <?php if (!empty($socialLinks)): ?>
+            <div class="flex justify-center space-x-4 mb-4 social-icons-footer">
+                <?php foreach ($socialLinks as $link): ?>
+                <a href="<?php echo htmlspecialchars($link['url']); ?>" target="_blank" rel="noopener noreferrer" title="<?php echo htmlspecialchars($link['label']); ?>" class="social-icon" style="--social-color: <?php echo htmlspecialchars($link['color']); ?>">
+                    <i class="<?php echo htmlspecialchars($link['icon']); ?>"></i>
+                </a>
+                <?php endforeach; ?>
+            </div>
+            <?php endif; ?>
             <p>&copy; <?php echo date('Y'); ?> <?php echo htmlspecialchars($siteName); ?>. All rights reserved.</p>
         </footer>
     </div>
 
-    <?php elseif ($templateId == 4): // ========== SERVICE BUSINESS ========== ?>
+    <?php elseif ($templateId == 3): // ========== LOCAL SERVICES ========== ?>
     <div class="min-h-screen bg-white">
         <!-- Header -->
         <nav class="bg-white shadow-sm sticky top-0 z-50">
@@ -481,9 +590,20 @@ $imageBasePath = '../';
                     <a href="#services" class="hover:text-gray-900">Services</a>
                     <a href="#contact" class="hover:text-gray-900">Contact</a>
                 </div>
-                <a href="#contact" class="px-5 py-2 text-white text-sm font-medium rounded-lg" style="background: <?php echo $primaryColor; ?>;">
-                    Get Quote
-                </a>
+                <div class="flex items-center space-x-4">
+                    <?php if (!empty($socialLinks)): ?>
+                    <div class="hidden md:flex items-center space-x-3 social-icons-header">
+                        <?php foreach (array_slice($socialLinks, 0, 4) as $link): ?>
+                        <a href="<?php echo htmlspecialchars($link['url']); ?>" target="_blank" rel="noopener noreferrer" title="<?php echo htmlspecialchars($link['label']); ?>" class="social-icon">
+                            <i class="<?php echo htmlspecialchars($link['icon']); ?>"></i>
+                        </a>
+                        <?php endforeach; ?>
+                    </div>
+                    <?php endif; ?>
+                    <a href="#contact" class="px-5 py-2 text-white text-sm font-medium rounded-lg" style="background: <?php echo $primaryColor; ?>;">
+                        Get Quote
+                    </a>
+                </div>
             </div>
         </nav>
 
@@ -549,11 +669,20 @@ $imageBasePath = '../';
 
         <!-- Footer -->
         <footer class="py-8 px-4 text-center text-sm text-gray-500 border-t">
+            <?php if (!empty($socialLinks)): ?>
+            <div class="flex justify-center space-x-4 mb-4 social-icons-footer">
+                <?php foreach ($socialLinks as $link): ?>
+                <a href="<?php echo htmlspecialchars($link['url']); ?>" target="_blank" rel="noopener noreferrer" title="<?php echo htmlspecialchars($link['label']); ?>" class="social-icon" style="--social-color: <?php echo htmlspecialchars($link['color']); ?>">
+                    <i class="<?php echo htmlspecialchars($link['icon']); ?>"></i>
+                </a>
+                <?php endforeach; ?>
+            </div>
+            <?php endif; ?>
             <p>&copy; <?php echo date('Y'); ?> <?php echo htmlspecialchars($siteName); ?>. All rights reserved.</p>
         </footer>
     </div>
 
-    <?php elseif ($templateId == 12): // ========== SARI-SARI STORE ========== ?>
+    <?php elseif ($templateId == 1): // ========== SARI-SARI STORE ========== ?>
     <div class="min-h-screen" style="background: #FEF3C7;">
         <!-- Header -->
         <nav class="bg-white shadow-md sticky top-0 z-50">
@@ -573,6 +702,15 @@ $imageBasePath = '../';
                     <a href="#about" class="hover:underline" style="color: <?php echo $primaryColor; ?>;">Tungkol</a>
                     <a href="#contact" class="hover:underline" style="color: <?php echo $primaryColor; ?>;">Contact</a>
                 </div>
+                <?php if (!empty($socialLinks)): ?>
+                <div class="hidden md:flex items-center space-x-3 social-icons-header">
+                    <?php foreach (array_slice($socialLinks, 0, 3) as $link): ?>
+                    <a href="<?php echo htmlspecialchars($link['url']); ?>" target="_blank" rel="noopener noreferrer" title="<?php echo htmlspecialchars($link['label']); ?>" class="social-icon">
+                        <i class="<?php echo htmlspecialchars($link['icon']); ?>"></i>
+                    </a>
+                    <?php endforeach; ?>
+                </div>
+                <?php endif; ?>
             </div>
         </nav>
 
@@ -652,6 +790,15 @@ $imageBasePath = '../';
 
         <!-- Footer -->
         <footer class="py-6 px-4 text-center text-sm text-gray-600" style="background: <?php echo $primaryColor; ?>;">
+            <?php if (!empty($socialLinks)): ?>
+            <div class="flex justify-center space-x-4 mb-3 social-icons-footer">
+                <?php foreach ($socialLinks as $link): ?>
+                <a href="<?php echo htmlspecialchars($link['url']); ?>" target="_blank" rel="noopener noreferrer" title="<?php echo htmlspecialchars($link['label']); ?>" class="social-icon text-white/80 hover:text-white" style="--social-color: <?php echo htmlspecialchars($link['color']); ?>">
+                    <i class="<?php echo htmlspecialchars($link['icon']); ?>"></i>
+                </a>
+                <?php endforeach; ?>
+            </div>
+            <?php endif; ?>
             <p class="text-white">&copy; <?php echo date('Y'); ?> <?php echo htmlspecialchars($siteName); ?>. Lahat ng karapatan ay nakalaan.</p>
         </footer>
     </div>
@@ -676,12 +823,28 @@ $imageBasePath = '../';
                     <a href="#services" class="hover:text-gray-200">Services</a>
                     <a href="#contact" class="hover:text-gray-200">Contact</a>
                 </div>
+                <?php if (!empty($socialLinks)): ?>
+                <div class="hidden md:flex items-center space-x-3 social-icons-header">
+                    <?php foreach (array_slice($socialLinks, 0, 4) as $link): ?>
+                    <a href="<?php echo htmlspecialchars($link['url']); ?>" target="_blank" rel="noopener noreferrer" title="<?php echo htmlspecialchars($link['label']); ?>" class="social-icon text-white/80 hover:text-white">
+                        <i class="<?php echo htmlspecialchars($link['icon']); ?>"></i>
+                    </a>
+                    <?php endforeach; ?>
+                </div>
+                <?php endif; ?>
             </div>
         </nav>
 
         <!-- Hero -->
-        <section id="home" class="gradient-hero text-white py-20 md:py-32 px-4 md:px-8">
-            <div class="max-w-4xl mx-auto text-center">
+        <section id="home" class="gradient-hero text-white py-20 md:py-32 px-4 md:px-8 relative overflow-hidden">
+            <?php if ($heroImage): ?>
+            <div class="absolute inset-0">
+                <img src="<?php echo $imageBasePath . htmlspecialchars($heroImage['image_path']); ?>" 
+                     alt="<?php echo htmlspecialchars($heroImage['alt_text'] ?? 'Hero Image'); ?>"
+                     class="w-full h-full object-cover opacity-30">
+            </div>
+            <?php endif; ?>
+            <div class="max-w-4xl mx-auto text-center relative z-10">
                 <h1 class="text-4xl md:text-6xl font-bold mb-6">
                     <?php echo htmlspecialchars($heroTitle); ?>
                 </h1>
@@ -713,9 +876,29 @@ $imageBasePath = '../';
         <section id="services" class="py-16 px-4 md:px-8 bg-gray-50">
             <div class="max-w-6xl mx-auto">
                 <h2 class="text-3xl font-bold text-center mb-12" style="color: <?php echo $primaryColor; ?>;">Our Services</h2>
+                
+                <?php if (!empty($galleryImages)): ?>
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-8">
+                    <?php foreach ($galleryImages as $index => $img): ?>
+                    <div class="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition">
+                        <div class="aspect-square overflow-hidden">
+                            <img src="<?php echo $imageBasePath . htmlspecialchars($img['image_path']); ?>" 
+                                 alt="<?php echo htmlspecialchars($img['alt_text'] ?? 'Service ' . ($index + 1)); ?>"
+                                 class="w-full h-full object-cover hover:scale-105 transition duration-300">
+                        </div>
+                        <div class="p-3 text-center">
+                            <p class="text-sm font-medium text-gray-700"><?php echo htmlspecialchars($img['alt_text'] ?? ''); ?></p>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+                <?php endif; ?>
+                
+                <?php if (!empty($servicesContent)): ?>
                 <div class="text-gray-600 leading-relaxed max-w-3xl mx-auto text-center">
                     <?php echo nl2br(htmlspecialchars($servicesContent)); ?>
                 </div>
+                <?php endif; ?>
             </div>
         </section>
 
@@ -731,9 +914,53 @@ $imageBasePath = '../';
 
         <!-- Footer -->
         <footer class="gradient-hero py-8 px-4 text-center text-sm text-white/80">
+            <?php if (!empty($socialLinks)): ?>
+            <div class="flex justify-center space-x-4 mb-4 social-icons-footer">
+                <?php foreach ($socialLinks as $link): ?>
+                <a href="<?php echo htmlspecialchars($link['url']); ?>" target="_blank" rel="noopener noreferrer" title="<?php echo htmlspecialchars($link['label']); ?>" class="social-icon text-white/70 hover:text-white" style="--social-color: <?php echo htmlspecialchars($link['color']); ?>">
+                    <i class="<?php echo htmlspecialchars($link['icon']); ?>"></i>
+                </a>
+                <?php endforeach; ?>
+            </div>
+            <?php endif; ?>
             <p>&copy; <?php echo date('Y'); ?> <?php echo htmlspecialchars($siteName); ?>. All rights reserved.</p>
         </footer>
     </div>
+    <?php endif; // End template ID check ?>
+    
+    <?php endif; // End modular template check ?>
+
+    <?php 
+    // Inject custom CSS/JS/HTML added by developer
+    $customCss = trim($site['custom_css'] ?? '');
+    $customJs = trim($site['custom_js'] ?? '');
+    $customHtml = trim($site['custom_html'] ?? '');
+    
+    // Remove template comments from CSS/JS/HTML (lines starting with comment markers only)
+    // Keep actual code but strip the template header comments
+    $customCss = preg_replace('/^\/\*\*[\s\S]*?\*\/\s*/m', '', $customCss, 1);
+    $customJs = preg_replace('/^\/\*\*[\s\S]*?\*\/\s*/m', '', $customJs, 1);
+    $customHtml = preg_replace('/^<!--[\s\S]*?-->\s*/m', '', $customHtml, 1);
+    
+    // Custom CSS (only if has actual content beyond comments)
+    if (!empty($customCss) && strlen(preg_replace('/\/\*[\s\S]*?\*\/|\s+/', '', $customCss)) > 10): ?>
+    <style id="custom-styles">
+    /* Custom CSS */
+    <?php echo $customCss; ?>
+    </style>
+    <?php endif;
+    
+    // Custom HTML sections
+    if (!empty($customHtml) && strlen(preg_replace('/<!--[\s\S]*?-->|\s+/', '', $customHtml)) > 10): ?>
+    <!-- Custom HTML -->
+    <?php echo $customHtml; ?>
+    <?php endif;
+    
+    // Custom JavaScript
+    if (!empty($customJs) && strlen(preg_replace('/\/\*[\s\S]*?\*\/|\/\/.*$/m|\s+/', '', $customJs)) > 20): ?>
+    <script id="custom-scripts">
+    <?php echo $customJs; ?>
+    </script>
     <?php endif; ?>
 
 </body>

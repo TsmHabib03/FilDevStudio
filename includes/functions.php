@@ -1047,4 +1047,261 @@ function getFriendlyPublicUrl($subdomain) {
     
     return "{$protocol}://{$host}{$basePath}/site/" . urlencode($subdomain);
 }
+
+// ============================================================================
+// SOCIAL MEDIA FUNCTIONS
+// ============================================================================
+
+/**
+ * Get social media platforms configuration
+ * @return array Social media platforms with icons and labels
+ */
+function getSocialPlatforms() {
+    return [
+        'facebook' => [
+            'label' => 'Facebook',
+            'icon' => 'fab fa-facebook-f',
+            'placeholder' => 'https://facebook.com/yourpage',
+            'color' => '#1877F2'
+        ],
+        'instagram' => [
+            'label' => 'Instagram',
+            'icon' => 'fab fa-instagram',
+            'placeholder' => 'https://instagram.com/yourprofile or @username',
+            'color' => '#E4405F'
+        ],
+        'tiktok' => [
+            'label' => 'TikTok',
+            'icon' => 'fab fa-tiktok',
+            'placeholder' => 'https://tiktok.com/@username or @username',
+            'color' => '#000000'
+        ],
+        'twitter' => [
+            'label' => 'Twitter / X',
+            'icon' => 'fab fa-x-twitter',
+            'placeholder' => 'https://x.com/username or @username',
+            'color' => '#000000'
+        ],
+        'youtube' => [
+            'label' => 'YouTube',
+            'icon' => 'fab fa-youtube',
+            'placeholder' => 'https://youtube.com/@channel',
+            'color' => '#FF0000'
+        ],
+        'linkedin' => [
+            'label' => 'LinkedIn',
+            'icon' => 'fab fa-linkedin-in',
+            'placeholder' => 'https://linkedin.com/company/yourcompany',
+            'color' => '#0A66C2'
+        ],
+        'whatsapp' => [
+            'label' => 'WhatsApp',
+            'icon' => 'fab fa-whatsapp',
+            'placeholder' => '09171234567 (Philippine mobile number)',
+            'color' => '#25D366'
+        ],
+        'messenger' => [
+            'label' => 'Messenger',
+            'icon' => 'fab fa-facebook-messenger',
+            'placeholder' => 'https://m.me/username or username',
+            'color' => '#0084FF'
+        ]
+    ];
+}
+
+/**
+ * Format raw social media input into proper URL
+ * @param string $platform Platform key (facebook, instagram, etc.)
+ * @param string $value Raw input value
+ * @return string|null Formatted URL or null if empty
+ */
+function formatSocialUrl($platform, $value) {
+    $value = trim($value);
+    if (empty($value)) {
+        return null;
+    }
+    
+    switch ($platform) {
+        case 'facebook':
+            // If it's already a URL, return as-is (ensure https)
+            if (preg_match('/^https?:\/\//i', $value)) {
+                return preg_replace('/^http:\/\//i', 'https://', $value);
+            }
+            // If it's a username/page name
+            return 'https://facebook.com/' . ltrim($value, '@/');
+            
+        case 'instagram':
+            if (preg_match('/^https?:\/\//i', $value)) {
+                return preg_replace('/^http:\/\//i', 'https://', $value);
+            }
+            return 'https://instagram.com/' . ltrim($value, '@/');
+            
+        case 'tiktok':
+            if (preg_match('/^https?:\/\//i', $value)) {
+                return preg_replace('/^http:\/\//i', 'https://', $value);
+            }
+            $username = ltrim($value, '@/');
+            return 'https://tiktok.com/@' . $username;
+            
+        case 'twitter':
+            if (preg_match('/^https?:\/\//i', $value)) {
+                return preg_replace('/^http:\/\//i', 'https://', $value);
+            }
+            return 'https://x.com/' . ltrim($value, '@/');
+            
+        case 'youtube':
+            if (preg_match('/^https?:\/\//i', $value)) {
+                return preg_replace('/^http:\/\//i', 'https://', $value);
+            }
+            // If it starts with @, it's a handle
+            if (strpos($value, '@') === 0) {
+                return 'https://youtube.com/' . $value;
+            }
+            return 'https://youtube.com/@' . $value;
+            
+        case 'linkedin':
+            if (preg_match('/^https?:\/\//i', $value)) {
+                return preg_replace('/^http:\/\//i', 'https://', $value);
+            }
+            return 'https://linkedin.com/company/' . ltrim($value, '/');
+            
+        case 'whatsapp':
+            // Format Philippine numbers: remove leading 0, add +63
+            $number = preg_replace('/[^0-9]/', '', $value);
+            if (strlen($number) === 11 && substr($number, 0, 1) === '0') {
+                // Philippine mobile: 09XX → 63 9XX
+                $number = '63' . substr($number, 1);
+            } elseif (strlen($number) === 10 && substr($number, 0, 1) === '9') {
+                // Already without leading 0: 9XX → 63 9XX
+                $number = '63' . $number;
+            }
+            // If already has country code, use as-is
+            return 'https://wa.me/' . $number;
+            
+        case 'messenger':
+            if (preg_match('/^https?:\/\//i', $value)) {
+                return preg_replace('/^http:\/\//i', 'https://', $value);
+            }
+            return 'https://m.me/' . ltrim($value, '@/');
+            
+        default:
+            return $value;
+    }
+}
+
+/**
+ * Get active social links for a site
+ * @param array $site Site data array containing social_* fields
+ * @return array Array of active social links with icon, url, label, and color
+ */
+function getSocialLinks($site) {
+    $platforms = getSocialPlatforms();
+    $socialLinks = [];
+    
+    foreach ($platforms as $key => $config) {
+        $fieldName = 'social_' . $key;
+        $rawValue = $site[$fieldName] ?? '';
+        
+        if (!empty($rawValue)) {
+            $url = formatSocialUrl($key, $rawValue);
+            if ($url) {
+                $socialLinks[$key] = [
+                    'platform' => $key,
+                    'label' => $config['label'],
+                    'icon' => $config['icon'],
+                    'url' => $url,
+                    'color' => $config['color'],
+                    'raw' => $rawValue
+                ];
+            }
+        }
+    }
+    
+    return $socialLinks;
+}
+
+/**
+ * Render social media icons for header (small, icon-only)
+ * @param array $socialLinks Array from getSocialLinks()
+ * @param string $primaryColor Site's primary color for hover effect
+ * @return string HTML string of social icons
+ */
+function renderSocialIconsHeader($socialLinks, $primaryColor = '#3B82F6') {
+    if (empty($socialLinks)) {
+        return '';
+    }
+    
+    $html = '<div class="flex items-center space-x-3">';
+    foreach ($socialLinks as $link) {
+        $html .= sprintf(
+            '<a href="%s" target="_blank" rel="noopener noreferrer" title="%s" class="text-gray-500 hover:text-primary transition-colors duration-200 transform hover:scale-110" style="--tw-text-opacity: 1;">
+                <i class="%s text-lg"></i>
+            </a>',
+            htmlspecialchars($link['url']),
+            htmlspecialchars($link['label']),
+            htmlspecialchars($link['icon'])
+        );
+    }
+    $html .= '</div>';
+    
+    return $html;
+}
+
+/**
+ * Render social media icons for footer (larger, with hover effects)
+ * @param array $socialLinks Array from getSocialLinks()
+ * @param string $primaryColor Site's primary color
+ * @param bool $showLabels Whether to show text labels
+ * @return string HTML string of social icons
+ */
+function renderSocialIconsFooter($socialLinks, $primaryColor = '#3B82F6', $showLabels = false) {
+    if (empty($socialLinks)) {
+        return '';
+    }
+    
+    $html = '<div class="flex flex-wrap items-center justify-center gap-4">';
+    foreach ($socialLinks as $link) {
+        if ($showLabels) {
+            $html .= sprintf(
+                '<a href="%s" target="_blank" rel="noopener noreferrer" 
+                    class="flex items-center space-x-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-all duration-300 transform hover:scale-105 hover:-translate-y-0.5">
+                    <i class="%s text-xl"></i>
+                    <span class="text-sm">%s</span>
+                </a>',
+                htmlspecialchars($link['url']),
+                htmlspecialchars($link['icon']),
+                htmlspecialchars($link['label'])
+            );
+        } else {
+            $html .= sprintf(
+                '<a href="%s" target="_blank" rel="noopener noreferrer" title="%s"
+                    class="w-10 h-10 flex items-center justify-center bg-white/10 hover:bg-white/20 rounded-lg transition-all duration-300 transform hover:scale-110 hover:-translate-y-0.5">
+                    <i class="%s text-xl"></i>
+                </a>',
+                htmlspecialchars($link['url']),
+                htmlspecialchars($link['label']),
+                htmlspecialchars($link['icon'])
+            );
+        }
+    }
+    $html .= '</div>';
+    
+    return $html;
+}
+
+/**
+ * Sanitize social media input before saving
+ * @param string $value Raw input value
+ * @return string Sanitized value
+ */
+function sanitizeSocialInput($value) {
+    $value = trim($value);
+    // Remove potentially dangerous characters but allow URLs
+    $value = strip_tags($value);
+    // Limit length
+    if (strlen($value) > 255) {
+        $value = substr($value, 0, 255);
+    }
+    return $value;
+}
 ?>

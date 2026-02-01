@@ -1,0 +1,14 @@
+
+
+========== 2026-02-01 09:04:03 ==========
+TO: test1@gmail.com
+SUBJECT: Your Request is Now Being Worked On! - FDS-260201-DB4B
+STATUS: QUEUED (could not send via SMTP)
+----------------------------------------
+
+
+========== 2026-02-01 09:04:20 ==========
+TO: jaudianhabib879@gmail.com
+SUBJECT: FilDevStudio Email Test - 2026-02-01 09:04:15
+STATUS: QUEUED (could not send via SMTP)
+----------------------------------------

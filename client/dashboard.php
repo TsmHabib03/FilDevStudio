@@ -108,9 +108,9 @@ $completedCount = count(array_filter($requests, fn($r) => $r['status'] === 'comp
                     </div>
                 </div>
                 <div class="mt-4 pt-4 border-t border-gray-100">
-                    <span class="text-amber-600 text-sm font-medium">
-                        <i class="fas fa-hourglass-half mr-1"></i>Awaiting review
-                    </span>
+                    <a href="my-requests.php" class="text-amber-600 text-sm font-medium hover:text-amber-700 transition-colors">
+                        View requests <i class="fas fa-arrow-right ml-1"></i>
+                    </a>
                 </div>
             </div>
             
@@ -125,9 +125,9 @@ $completedCount = count(array_filter($requests, fn($r) => $r['status'] === 'comp
                     </div>
                 </div>
                 <div class="mt-4 pt-4 border-t border-gray-100">
-                    <span class="text-blue-600 text-sm font-medium">
-                        <i class="fas fa-tools mr-1"></i>Being worked on
-                    </span>
+                    <a href="my-requests.php" class="text-blue-600 text-sm font-medium hover:text-blue-700 transition-colors">
+                        View requests <i class="fas fa-arrow-right ml-1"></i>
+                    </a>
                 </div>
             </div>
             
@@ -142,9 +142,9 @@ $completedCount = count(array_filter($requests, fn($r) => $r['status'] === 'comp
                     </div>
                 </div>
                 <div class="mt-4 pt-4 border-t border-gray-100">
-                    <span class="text-secondary-600 text-sm font-medium">
-                        <i class="fas fa-check-circle mr-1"></i>All done!
-                    </span>
+                    <a href="my-requests.php" class="text-secondary-600 text-sm font-medium hover:text-secondary-700 transition-colors">
+                        View requests <i class="fas fa-arrow-right ml-1"></i>
+                    </a>
                 </div>
             </div>
         </div>

@@ -1,16 +1,33 @@
 <?php
 /**
  * Edit Site Page - Content Management
+ * Updated: Replaced DIY image uploads with "Submit for Design" service
  */
-$pageTitle = "Edit Website - FilDevStudio";
-require_once '../includes/header.php';
 require_once '../includes/functions.php';
-requireLogin();
+require_once '../config/database.php';
+require_once '../includes/mail.php';
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Check login BEFORE any output
+if (!isLoggedIn()) {
+    $_SESSION['error'] = 'Please log in to access this page.';
+    header('Location: ../auth/login.php');
+    exit();
+}
 
 $siteId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 $userId = $_SESSION['user_id'];
 $error = '';
 $success = '';
+
+// Check for success message from session (used after redirects)
+if (isset($_SESSION['success_message'])) {
+    $success = $_SESSION['success_message'];
+    unset($_SESSION['success_message']);
+}
 
 // Get site data
 try {
@@ -25,236 +42,147 @@ try {
         redirect('dashboard.php');
     }
     
+    // Get user info for email notifications
+    $stmtUser = $pdo->prepare("SELECT email, name FROM users WHERE id = ?");
+    $stmtUser->execute([$userId]);
+    $user = $stmtUser->fetch();
+    
 } catch (Exception $e) {
     redirect('dashboard.php');
 }
 
-// Template-specific hints and labels
+// Template-specific hints and labels (5 SME-focused templates)
 $templateId = $site['template_id'] ?? 1;
 $templateHints = [
-    1 => [ // Modern Retail
-        'heroTitle' => 'e.g., "Discover Your Style" or "New Collection Out Now"',
-        'heroSubtitle' => 'Highlight your best products or current promotions',
-        'about' => 'Share your brand story and what makes your products special',
-        'services' => 'List featured products, categories, or bestsellers',
-        'servicesLabel' => 'Products & Categories',
-        'icon' => 'fa-shopping-bag'
-    ],
-    2 => [ // Restaurant Pro
-        'heroTitle' => 'e.g., "Authentic Filipino Cuisine" or "A Taste of Home"',
-        'heroSubtitle' => 'Describe your dining experience or signature dishes',
-        'about' => 'Tell your restaurant\'s story - family recipes, chef background, etc.',
-        'services' => 'List your menu categories or specialties',
-        'servicesLabel' => 'Menu Highlights',
-        'icon' => 'fa-utensils'
-    ],
-    3 => [ // Freelancer Portfolio
-        'heroTitle' => 'e.g., "Creative Developer & Designer" or your name',
-        'heroSubtitle' => 'Your tagline - what you do and who you help',
-        'about' => 'Your professional background, skills, and what drives you',
-        'services' => 'List your services or describe your notable projects',
-        'servicesLabel' => 'Services & Projects',
-        'icon' => 'fa-laptop-code'
-    ],
-    4 => [ // Service Business
-        'heroTitle' => 'e.g., "Professional Solutions You Can Trust"',
-        'heroSubtitle' => 'Your value proposition - why choose your services',
-        'about' => 'Company history, expertise, certifications, and team',
-        'services' => 'List all your services with brief descriptions',
-        'servicesLabel' => 'Our Services',
-        'icon' => 'fa-briefcase'
-    ],
-    5 => [ // General Business
-        'heroTitle' => 'Your main headline - grab attention!',
-        'heroSubtitle' => 'A supporting tagline or call to action',
-        'about' => 'Your company story, mission, and values',
-        'services' => 'What you offer to your customers',
-        'servicesLabel' => 'What We Offer',
-        'icon' => 'fa-building'
-    ],
-    6 => [ // E-Commerce Starter
-        'heroTitle' => 'e.g., "Shop Quality Products Online"',
-        'heroSubtitle' => 'Highlight free shipping, discounts, or best sellers',
-        'about' => 'Why customers should buy from you',
-        'services' => 'Featured products or product categories',
-        'servicesLabel' => 'Featured Products',
-        'icon' => 'fa-store'
-    ],
-    7 => [ // Urban Streetwear
-        'heroTitle' => 'e.g., "DROP 001" or "STREET CULTURE"',
-        'heroSubtitle' => 'Bold statement - keep it short and impactful',
-        'about' => 'Your brand\'s philosophy and street culture inspiration',
-        'services' => 'New drops, featured items, or collections',
-        'servicesLabel' => 'Collections & Drops',
-        'icon' => 'fa-tshirt'
-    ],
-    8 => [ // Tech Startup
-        'heroTitle' => 'e.g., "Build Faster, Scale Smarter"',
-        'heroSubtitle' => 'Explain your product/service value in one line',
-        'about' => 'Your company vision, technology, and team background',
-        'services' => 'Key features, pricing tiers, or solutions',
-        'servicesLabel' => 'Features & Solutions',
-        'icon' => 'fa-rocket'
-    ],
-    9 => [ // Boutique Shop
-        'heroTitle' => 'e.g., "Spring Collection 2024" or "Discover Elegance"',
-        'heroSubtitle' => 'A soft, elegant tagline for your boutique brand',
-        'about' => 'Your brand story - craftsmanship, inspiration, and style philosophy',
-        'services' => 'Featured products, new arrivals, or seasonal collections',
-        'servicesLabel' => 'Collections & Products',
-        'icon' => 'fa-gem'
-    ],
-    10 => [ // Electronics Store
-        'heroTitle' => 'e.g., "Latest Tech, Best Prices" or "Gadget Heaven"',
-        'heroSubtitle' => 'Highlight deals, warranties, or exclusive offers',
-        'about' => 'Why buy from you - authenticity, warranty, after-sales support',
-        'services' => 'Featured gadgets, categories, or bestselling products',
-        'servicesLabel' => 'Featured Products',
-        'icon' => 'fa-microchip'
-    ],
-    11 => [ // Grocery & Supermarket
-        'heroTitle' => 'e.g., "Fresh Daily!" or "Quality Groceries"',
-        'heroSubtitle' => 'Highlight freshness, prices, or delivery options',
-        'about' => 'Your store story - family-owned, fresh sourcing, community focus',
-        'services' => 'Product categories, weekly deals, or delivery info',
-        'servicesLabel' => 'Products & Deals',
-        'icon' => 'fa-shopping-basket'
-    ],
-    12 => [ // Sari-Sari Store
+    1 => [ // Sari-Sari Store
         'heroTitle' => 'e.g., "Tindahan ng Bayan" or "Mura at Matibay"',
-        'heroSubtitle' => 'Your tagline - tingi prices, services offered',
-        'about' => 'Your sari-sari story - barangay location, years serving, etc.',
-        'services' => 'Products available: snacks, drinks, e-load, sachet items',
+        'heroSubtitle' => 'Your tagline - tingi prices, barangay location, services offered',
+        'about' => 'Your sari-sari story - years serving the community, family-owned, location',
+        'services' => 'Products: snacks, drinks, e-load, sachet items, cigarettes, candies',
         'servicesLabel' => 'Mga Paninda',
         'icon' => 'fa-store-alt'
     ],
-    13 => [ // Sari-Sari Plus
-        'heroTitle' => 'e.g., "Modern Convenience Store" or "Order Online!"',
-        'heroSubtitle' => 'Highlight delivery, GCash, or 24/7 service',
-        'about' => 'Your modern sari-sari concept - delivery, digital payments',
-        'services' => 'Services: groceries, e-load, bills payment, delivery',
-        'servicesLabel' => 'Products & Services',
-        'icon' => 'fa-motorcycle'
+    2 => [ // Carinderia & Food Business
+        'heroTitle' => 'e.g., "Masarap at Mura!" or "Lutong Bahay"',
+        'heroSubtitle' => 'Home-cooked meals, specialty dishes, affordable food',
+        'about' => 'Your carinderia story - family recipes, fresh ingredients, years of service',
+        'services' => 'Menu: ulam, rice meals, snacks, beverages, merienda items',
+        'servicesLabel' => 'Menu ng Araw',
+        'icon' => 'fa-utensils'
+    ],
+    3 => [ // Local Services
+        'heroTitle' => 'e.g., "Serbisyong Tapat" or "Quality Service Guaranteed"',
+        'heroSubtitle' => 'Your main service offering and coverage area',
+        'about' => 'Your expertise, years of experience, certifications, service guarantee',
+        'services' => 'List services: repairs, laundry, salon, installations, rates',
+        'servicesLabel' => 'Mga Serbisyo',
+        'icon' => 'fa-tools'
+    ],
+    4 => [ // Small Retail Shop
+        'heroTitle' => 'e.g., "Quality Products, Best Prices"',
+        'heroSubtitle' => 'Highlight your specialty - gadgets, RTW, ukay-ukay, etc.',
+        'about' => 'Your shop story - what you sell, why customers love you',
+        'services' => 'Featured products, categories, bestsellers, new arrivals',
+        'servicesLabel' => 'Products & Categories',
+        'icon' => 'fa-shopping-bag'
+    ],
+    5 => [ // Freelancer Portfolio
+        'heroTitle' => 'e.g., "Creative Designer" or your professional title',
+        'heroSubtitle' => 'What you do and who you help - your value proposition',
+        'about' => 'Your background, skills, tools you use, achievements',
+        'services' => 'Services offered, project types, rates, past work',
+        'servicesLabel' => 'Services & Portfolio',
+        'icon' => 'fa-laptop-code'
     ]
 ];
 
-$hints = $templateHints[$templateId] ?? $templateHints[5]; // Default to general business
+$hints = $templateHints[$templateId] ?? $templateHints[1];
 
-// Get existing site images
-$logoImage = getSiteImage($pdo, $siteId, 'logo');
-$heroImage = getSiteImage($pdo, $siteId, 'hero');
-$galleryImages = getSiteImages($pdo, $siteId, 'gallery');
+// Get existing design requests for this site
+$existingRequests = [];
+try {
+    $stmtRequests = $pdo->prepare("SELECT * FROM custom_requests WHERE site_id = ? ORDER BY created_at DESC LIMIT 5");
+    $stmtRequests->execute([$siteId]);
+    $existingRequests = $stmtRequests->fetchAll();
+} catch (Exception $e) {
+    // Table might not exist yet
+}
 
-// Process image upload
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'upload_image') {
-    $imageType = sanitize($_POST['image_type'] ?? '');
-    $altText = sanitize($_POST['alt_text'] ?? '');
+// Process design request submission
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'submit_design_request') {
+    $requestType = sanitize($_POST['request_type'] ?? 'design');
+    $designNotes = sanitize($_POST['design_notes'] ?? '');
+    $priority = sanitize($_POST['priority'] ?? 'normal');
     
-    if (!empty($_FILES['image']) && $_FILES['image']['error'] !== UPLOAD_ERR_NO_FILE) {
-        $displayOrder = ($imageType === 'gallery') ? count($galleryImages) : 0;
-        $result = uploadSiteImage($pdo, $siteId, $_FILES['image'], $imageType, $altText, $displayOrder);
+    // Generate reference number
+    $referenceNumber = generateReferenceNumber('FDS');
+    
+    try {
+        // Insert design request
+        $stmt = $pdo->prepare("INSERT INTO custom_requests (user_id, site_id, request_type, description, priority, reference_number, status, created_at) 
+                               VALUES (?, ?, ?, ?, ?, ?, 'pending', NOW())");
+        $stmt->execute([$userId, $siteId, $requestType, $designNotes, $priority, $referenceNumber]);
+        $requestId = $pdo->lastInsertId();
         
-        if ($result['success']) {
-            $success = $result['message'];
-            logActivity($pdo, $userId, 'upload_image', "Uploaded $imageType image for site ID: $siteId");
+        // Handle file uploads
+        $uploadedFiles = [];
+        if (!empty($_FILES['design_files']['name'][0])) {
+            $uploadDir = '../uploads/requests/' . $requestId . '/';
+            if (!is_dir($uploadDir)) {
+                mkdir($uploadDir, 0755, true);
+            }
             
-            // Refresh images
-            $logoImage = getSiteImage($pdo, $siteId, 'logo');
-            $heroImage = getSiteImage($pdo, $siteId, 'hero');
-            $galleryImages = getSiteImages($pdo, $siteId, 'gallery');
-        } else {
-            $error = $result['message'];
-        }
-    } else {
-        $error = 'Please select an image to upload.';
-    }
-}
-
-// Process image deletion
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'delete_image') {
-    $imageId = (int)($_POST['image_id'] ?? 0);
-    
-    if ($imageId > 0) {
-        $result = deleteSiteImage($pdo, $imageId, $siteId);
-        
-        if ($result['success']) {
-            $success = $result['message'];
-            logActivity($pdo, $userId, 'delete_image', "Deleted image ID: $imageId from site ID: $siteId");
+            $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf', 'application/zip'];
+            $maxSize = 10 * 1024 * 1024; // 10MB
             
-            // Refresh images
-            $logoImage = getSiteImage($pdo, $siteId, 'logo');
-            $heroImage = getSiteImage($pdo, $siteId, 'hero');
-            $galleryImages = getSiteImages($pdo, $siteId, 'gallery');
-        } else {
-            $error = $result['message'];
+            foreach ($_FILES['design_files']['name'] as $key => $filename) {
+                if ($_FILES['design_files']['error'][$key] === UPLOAD_ERR_OK) {
+                    $tmpName = $_FILES['design_files']['tmp_name'][$key];
+                    $fileType = $_FILES['design_files']['type'][$key];
+                    $fileSize = $_FILES['design_files']['size'][$key];
+                    
+                    if (in_array($fileType, $allowedTypes) && $fileSize <= $maxSize) {
+                        $safeName = time() . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '', $filename);
+                        $destination = $uploadDir . $safeName;
+                        
+                        if (move_uploaded_file($tmpName, $destination)) {
+                            // Store file reference in database if table exists
+                            try {
+                                $stmtFile = $pdo->prepare("INSERT INTO request_files (request_id, file_name, file_path, file_type, file_size, created_at) 
+                                                           VALUES (?, ?, ?, ?, ?, NOW())");
+                                $stmtFile->execute([$requestId, $filename, 'uploads/requests/' . $requestId . '/' . $safeName, $fileType, $fileSize]);
+                            } catch (Exception $e) {
+                                // Table might not exist
+                            }
+                            $uploadedFiles[] = $filename;
+                        }
+                    }
+                }
+            }
         }
-    }
-}
-
-// Process publish site
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'publish_site') {
-    $subdomain = strtolower(trim($_POST['subdomain'] ?? ''));
-    
-    if (empty($subdomain)) {
-        // Auto-generate subdomain from site name
-        $subdomain = generateSubdomain($site['site_name'] ?? 'my-site');
-        $subdomain = generateUniqueSubdomain($pdo, $subdomain, $siteId);
-    }
-    
-    $result = publishSite($pdo, $siteId, $userId, $subdomain);
-    
-    if ($result['success']) {
-        $success = $result['message'];
-        logActivity($pdo, $userId, 'publish_site', "Published site: {$site['site_name']} with subdomain: $subdomain");
         
-        // Refresh site data
-        $stmt = $pdo->prepare("SELECT cs.*, t.name as template_name, t.category as template_category FROM client_sites cs 
-                               LEFT JOIN templates t ON cs.template_id = t.id 
-                               WHERE cs.id = ?");
-        $stmt->execute([$siteId]);
-        $site = $stmt->fetch();
-    } else {
-        $error = $result['message'];
-    }
-}
-
-// Process unpublish site
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'unpublish_site') {
-    $result = unpublishSite($pdo, $siteId, $userId);
-    
-    if ($result['success']) {
-        $success = $result['message'];
-        logActivity($pdo, $userId, 'unpublish_site', "Unpublished site: {$site['site_name']}");
+        // Send notifications
+        $requestData = [
+            'id' => $requestId,
+            'reference_number' => $referenceNumber,
+            'site_name' => $site['site_name'],
+            'request_type' => $requestType,
+            'description' => $designNotes,
+            'priority' => $priority,
+            'client_name' => $user['name'],
+            'client_email' => $user['email']
+        ];
+        notifyAdminNewRequest($pdo, $requestData);
         
-        // Refresh site data
-        $stmt = $pdo->prepare("SELECT cs.*, t.name as template_name, t.category as template_category FROM client_sites cs 
-                               LEFT JOIN templates t ON cs.template_id = t.id 
-                               WHERE cs.id = ?");
-        $stmt->execute([$siteId]);
-        $site = $stmt->fetch();
-    } else {
-        $error = $result['message'];
-    }
-}
-
-// Process subdomain update
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_subdomain') {
-    $subdomain = strtolower(trim($_POST['subdomain'] ?? ''));
-    
-    $result = updateSubdomain($pdo, $siteId, $userId, $subdomain);
-    
-    if ($result['success']) {
-        $success = $result['message'];
-        logActivity($pdo, $userId, 'update_subdomain', "Updated subdomain for site: {$site['site_name']} to: $subdomain");
+        // Log activity
+        logActivity($pdo, $userId, 'design_request', "Submitted design request #$referenceNumber for site: {$site['site_name']}");
         
-        // Refresh site data
-        $stmt = $pdo->prepare("SELECT cs.*, t.name as template_name, t.category as template_category FROM client_sites cs 
-                               LEFT JOIN templates t ON cs.template_id = t.id 
-                               WHERE cs.id = ?");
-        $stmt->execute([$siteId]);
-        $site = $stmt->fetch();
-    } else {
-        $error = $result['message'];
+        $_SESSION['success_message'] = "Design request submitted successfully! Reference: <strong>$referenceNumber</strong>. Our team will contact you within 24-48 hours.";
+        header("Location: edit-site.php?id=$siteId&step=2");
+        exit;
+        
+    } catch (Exception $e) {
+        $error = 'Failed to submit request. Please try again. ' . $e->getMessage();
     }
 }
 
@@ -272,6 +200,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!isset($_POST['action']) || $_POST
     $fontHeading = sanitize($_POST['font_heading'] ?? 'Inter');
     $fontBody = sanitize($_POST['font_body'] ?? 'Inter');
     
+    // Social media links
+    $socialFacebook = sanitizeSocialInput($_POST['social_facebook'] ?? '');
+    $socialInstagram = sanitizeSocialInput($_POST['social_instagram'] ?? '');
+    $socialTiktok = sanitizeSocialInput($_POST['social_tiktok'] ?? '');
+    $socialTwitter = sanitizeSocialInput($_POST['social_twitter'] ?? '');
+    $socialYoutube = sanitizeSocialInput($_POST['social_youtube'] ?? '');
+    $socialLinkedin = sanitizeSocialInput($_POST['social_linkedin'] ?? '');
+    $socialWhatsapp = sanitizeSocialInput($_POST['social_whatsapp'] ?? '');
+    $socialMessenger = sanitizeSocialInput($_POST['social_messenger'] ?? '');
+    
     // Validate fonts
     if (!isValidFont($fontHeading)) $fontHeading = 'Inter';
     if (!isValidFont($fontBody)) $fontBody = 'Inter';
@@ -282,6 +220,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!isset($_POST['action']) || $_POST
                                about_content = ?, services_content = ?, contact_info = ?,
                                primary_color = ?, secondary_color = ?, accent_color = ?,
                                font_heading = ?, font_body = ?,
+                               social_facebook = ?, social_instagram = ?, social_tiktok = ?,
+                               social_twitter = ?, social_youtube = ?, social_linkedin = ?,
+                               social_whatsapp = ?, social_messenger = ?,
                                updated_at = NOW()
                                WHERE id = ? AND user_id = ?");
         $stmt->execute([
@@ -289,6 +230,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!isset($_POST['action']) || $_POST
             $aboutContent, $servicesContent, $contactInfo,
             $primaryColor, $secondaryColor, $accentColor,
             $fontHeading, $fontBody,
+            $socialFacebook ?: null, $socialInstagram ?: null, $socialTiktok ?: null,
+            $socialTwitter ?: null, $socialYoutube ?: null, $socialLinkedin ?: null,
+            $socialWhatsapp ?: null, $socialMessenger ?: null,
             $siteId, $userId
         ]);
         
@@ -306,6 +250,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!isset($_POST['action']) || $_POST
         $error = 'Failed to update. Please try again.';
     }
 }
+
+// NOW include header (after all redirects are done)
+$pageTitle = "Edit Website - FilDevStudio";
+require_once '../includes/header.php';
 ?>
 
 <!-- Page Header -->
@@ -320,8 +268,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!isset($_POST['action']) || $_POST
                 <p class="text-blue-100">Template: <?php echo htmlspecialchars($site['template_name']); ?> • <?php echo getStatusBadge($site['status']); ?></p>
             </div>
             <div class="flex gap-3">
-                <a href="custom-request.php?site_id=<?php echo $siteId; ?>" class="bg-white text-primary px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition">
-                    <i class="fas fa-palette mr-2"></i>Request Customization
+                <a href="preview-site.php?id=<?php echo $siteId; ?>" target="_blank"
+                   class="bg-white text-primary px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition">
+                    <i class="fas fa-eye mr-2"></i>Preview Site
                 </a>
             </div>
         </div>
@@ -329,15 +278,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!isset($_POST['action']) || $_POST
 </section>
 
 <section class="py-8">
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         <?php if ($error): echo displayAlert('error', $error); endif; ?>
         <?php if ($success): echo displayAlert('success', $success); endif; ?>
         
-        <form method="POST" action="" enctype="multipart/form-data">
-            <input type="hidden" name="action" value="update_content">
-            <div class="grid lg:grid-cols-3 gap-8">
-                <!-- Main Content Editor -->
-                <div class="lg:col-span-2 space-y-6">
+        <!-- Multi-Step Progress Bar -->
+        <div class="bg-white rounded-xl shadow p-6 mb-8">
+            <div class="flex items-center justify-between mb-2">
+                <h3 class="text-sm font-medium text-gray-500">Edit Your Website</h3>
+                <span class="text-sm text-gray-500" id="stepIndicator">Step 1 of 2</span>
+            </div>
+            <div class="relative">
+                <div class="overflow-hidden h-3 text-xs flex rounded-full bg-gray-200">
+                    <div id="progressBar" class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-gradient-to-r from-blue-500 to-blue-600 transition-all duration-500 ease-out rounded-full" style="width: 50%"></div>
+                </div>
+                <div class="flex justify-between mt-3">
+                    <div class="flex items-center cursor-pointer" onclick="goToStep(1)">
+                        <div id="step1Dot" class="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center text-sm font-semibold shadow-lg">
+                            <i class="fas fa-pen"></i>
+                        </div>
+                        <span class="ml-2 text-sm font-medium text-blue-600">Content & Settings</span>
+                    </div>
+                    <div class="flex items-center cursor-pointer" onclick="goToStep(2)">
+                        <span class="mr-2 text-sm font-medium text-gray-400" id="step2Label">Submit for Design</span>
+                        <div id="step2Dot" class="w-8 h-8 rounded-full bg-gray-300 text-gray-500 flex items-center justify-center text-sm font-semibold">
+                            <i class="fas fa-palette"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Step 1: Content & Settings -->
+        <div id="step1Content" class="step-content">
+            <form method="POST" action="" enctype="multipart/form-data" id="contentForm">
+                <input type="hidden" name="action" value="update_content">
+                
+                <div class="space-y-6">
                     <!-- Basic Info -->
                     <div class="bg-white rounded-xl shadow p-6">
                         <h2 class="text-lg font-bold text-gray-800 mb-4">
@@ -345,8 +322,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!isset($_POST['action']) || $_POST
                         </h2>
                         <div class="space-y-4">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Site Name</label>
-                                <input type="text" name="site_name" value="<?php echo htmlspecialchars($site['site_name'] ?? ''); ?>"
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Site Name <span class="text-red-500">*</span></label>
+                                <input type="text" name="site_name" value="<?php echo htmlspecialchars($site['site_name'] ?? ''); ?>" required
                                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
                             </div>
                         </div>
@@ -416,494 +393,456 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!isset($_POST['action']) || $_POST
                         </div>
                     </div>
                     
-                    <!-- Save Content Button -->
-                    <div class="bg-white rounded-xl shadow p-6">
-                        <button type="submit" class="w-full gradient-bg text-white py-3 rounded-lg font-semibold hover:opacity-90 transition">
-                            <i class="fas fa-save mr-2"></i>Save Content Changes
-                        </button>
-                    </div>
-                </div>
-                
-                <!-- Sidebar -->
-                <div class="space-y-6">
-                    <!-- Colors -->
+                    <!-- Social Media Links Section -->
+                    <?php $socialPlatforms = getSocialPlatforms(); ?>
                     <div class="bg-white rounded-xl shadow p-6">
                         <h2 class="text-lg font-bold text-gray-800 mb-4">
-                            <i class="fas fa-palette text-primary mr-2"></i>Colors
+                            <i class="fas fa-share-alt text-primary mr-2"></i>Social Media Links
                         </h2>
-                        <div class="space-y-4">
+                        <p class="text-sm text-gray-500 mb-4">Add your social media profiles. Only filled platforms will be displayed on your site.</p>
+                        
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <!-- Facebook -->
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Primary Color</label>
-                                <div class="flex items-center space-x-3">
-                                    <input type="color" name="primary_color" value="<?php echo $site['primary_color'] ?? '#3B82F6'; ?>"
-                                           class="w-12 h-10 rounded cursor-pointer border">
-                                    <input type="text" value="<?php echo $site['primary_color'] ?? '#3B82F6'; ?>"
-                                           class="flex-1 px-3 py-2 border rounded text-sm" readonly>
-                                </div>
+                                <label class="flex items-center text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fab fa-facebook-f w-5 text-[#1877F2] mr-2"></i>Facebook
+                                </label>
+                                <input type="text" name="social_facebook" 
+                                       value="<?php echo htmlspecialchars($site['social_facebook'] ?? ''); ?>"
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
+                                       placeholder="<?php echo htmlspecialchars($socialPlatforms['facebook']['placeholder']); ?>">
                             </div>
+                            
+                            <!-- Instagram -->
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Secondary Color</label>
-                                <div class="flex items-center space-x-3">
-                                    <input type="color" name="secondary_color" value="<?php echo $site['secondary_color'] ?? '#1E40AF'; ?>"
-                                           class="w-12 h-10 rounded cursor-pointer border">
-                                    <input type="text" value="<?php echo $site['secondary_color'] ?? '#1E40AF'; ?>"
-                                           class="flex-1 px-3 py-2 border rounded text-sm" readonly>
-                                </div>
+                                <label class="flex items-center text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fab fa-instagram w-5 text-[#E4405F] mr-2"></i>Instagram
+                                </label>
+                                <input type="text" name="social_instagram" 
+                                       value="<?php echo htmlspecialchars($site['social_instagram'] ?? ''); ?>"
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
+                                       placeholder="<?php echo htmlspecialchars($socialPlatforms['instagram']['placeholder']); ?>">
                             </div>
+                            
+                            <!-- TikTok -->
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Accent Color</label>
-                                <div class="flex items-center space-x-3">
-                                    <input type="color" name="accent_color" value="<?php echo $site['accent_color'] ?? '#F59E0B'; ?>"
-                                           class="w-12 h-10 rounded cursor-pointer border">
-                                    <input type="text" value="<?php echo $site['accent_color'] ?? '#F59E0B'; ?>"
-                                           class="flex-1 px-3 py-2 border rounded text-sm" readonly>
-                                </div>
+                                <label class="flex items-center text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fab fa-tiktok w-5 mr-2"></i>TikTok
+                                </label>
+                                <input type="text" name="social_tiktok" 
+                                       value="<?php echo htmlspecialchars($site['social_tiktok'] ?? ''); ?>"
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
+                                       placeholder="<?php echo htmlspecialchars($socialPlatforms['tiktok']['placeholder']); ?>">
+                            </div>
+                            
+                            <!-- WhatsApp -->
+                            <div>
+                                <label class="flex items-center text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fab fa-whatsapp w-5 text-[#25D366] mr-2"></i>WhatsApp
+                                </label>
+                                <input type="text" name="social_whatsapp" 
+                                       value="<?php echo htmlspecialchars($site['social_whatsapp'] ?? ''); ?>"
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
+                                       placeholder="<?php echo htmlspecialchars($socialPlatforms['whatsapp']['placeholder']); ?>">
+                            </div>
+                            
+                            <!-- Messenger -->
+                            <div>
+                                <label class="flex items-center text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fab fa-facebook-messenger w-5 text-[#0084FF] mr-2"></i>Messenger
+                                </label>
+                                <input type="text" name="social_messenger" 
+                                       value="<?php echo htmlspecialchars($site['social_messenger'] ?? ''); ?>"
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
+                                       placeholder="<?php echo htmlspecialchars($socialPlatforms['messenger']['placeholder']); ?>">
+                            </div>
+                            
+                            <!-- LinkedIn -->
+                            <div>
+                                <label class="flex items-center text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fab fa-linkedin-in w-5 text-[#0A66C2] mr-2"></i>LinkedIn
+                                </label>
+                                <input type="text" name="social_linkedin" 
+                                       value="<?php echo htmlspecialchars($site['social_linkedin'] ?? ''); ?>"
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
+                                       placeholder="<?php echo htmlspecialchars($socialPlatforms['linkedin']['placeholder']); ?>">
+                            </div>
+                            
+                            <!-- Twitter -->
+                            <div>
+                                <label class="flex items-center text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fab fa-x-twitter w-5 mr-2"></i>Twitter / X
+                                </label>
+                                <input type="text" name="social_twitter" 
+                                       value="<?php echo htmlspecialchars($site['social_twitter'] ?? ''); ?>"
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
+                                       placeholder="<?php echo htmlspecialchars($socialPlatforms['twitter']['placeholder']); ?>">
+                            </div>
+                            
+                            <!-- YouTube -->
+                            <div>
+                                <label class="flex items-center text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fab fa-youtube w-5 text-[#FF0000] mr-2"></i>YouTube
+                                </label>
+                                <input type="text" name="social_youtube" 
+                                       value="<?php echo htmlspecialchars($site['social_youtube'] ?? ''); ?>"
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
+                                       placeholder="<?php echo htmlspecialchars($socialPlatforms['youtube']['placeholder']); ?>">
                             </div>
                         </div>
                     </div>
                     
-                    <!-- Fonts Section -->
-                    <?php 
-                    $availableFonts = getAvailableFonts();
-                    $fontPairings = getFontPairings();
-                    $currentHeadingFont = $site['font_heading'] ?? 'Inter';
-                    $currentBodyFont = $site['font_body'] ?? 'Inter';
-                    ?>
-                    <div class="bg-white rounded-xl shadow p-6">
-                        <h2 class="text-lg font-bold text-gray-800 mb-4">
-                            <i class="fas fa-font text-primary mr-2"></i>Typography
-                        </h2>
-                        <div class="space-y-4">
-                            <!-- Heading Font -->
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Heading Font</label>
-                                <select name="font_heading" id="fontHeading" 
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
-                                        onchange="updateFontPreview()">
-                                    <?php foreach ($availableFonts as $fontName => $fontData): ?>
-                                    <option value="<?php echo htmlspecialchars($fontName); ?>" 
-                                            data-category="<?php echo $fontData['category']; ?>"
-                                            <?php echo $currentHeadingFont === $fontName ? 'selected' : ''; ?>>
-                                        <?php echo htmlspecialchars($fontData['label']); ?>
-                                    </option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
+                    <!-- Colors & Typography Row -->
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <!-- Colors -->
+                        <div class="bg-white rounded-xl shadow p-6">
+                            <h2 class="text-lg font-bold text-gray-800 mb-4">
+                                <i class="fas fa-palette text-primary mr-2"></i>Colors
+                            </h2>
                             
-                            <!-- Body Font -->
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Body Font</label>
-                                <select name="font_body" id="fontBody"
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
-                                        onchange="updateFontPreview()">
-                                    <?php foreach ($availableFonts as $fontName => $fontData): ?>
-                                    <option value="<?php echo htmlspecialchars($fontName); ?>"
-                                            data-category="<?php echo $fontData['category']; ?>"
-                                            <?php echo $currentBodyFont === $fontName ? 'selected' : ''; ?>>
-                                        <?php echo htmlspecialchars($fontData['label']); ?>
-                                    </option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
-                            
-                            <!-- Font Preview -->
-                            <div class="border rounded-lg p-4 bg-gray-50">
-                                <p class="text-xs text-gray-500 mb-2">Preview</p>
-                                <h3 id="fontPreviewHeading" class="text-xl font-bold text-gray-800 mb-2" style="font-family: '<?php echo $currentHeadingFont; ?>', sans-serif;">
-                                    Your Heading Text
-                                </h3>
-                                <p id="fontPreviewBody" class="text-sm text-gray-600" style="font-family: '<?php echo $currentBodyFont; ?>', sans-serif;">
-                                    This is how your body text will look. Choose fonts that match your brand personality.
-                                </p>
-                            </div>
-                            
-                            <!-- Font Pairing Suggestions -->
-                            <div class="border-t pt-4">
-                                <p class="text-xs font-medium text-gray-500 mb-2">
-                                    <i class="fas fa-lightbulb mr-1 text-yellow-500"></i>Suggested Pairings
-                                </p>
-                                <div class="space-y-2 max-h-32 overflow-y-auto">
-                                    <?php foreach (array_slice($fontPairings, 0, 4) as $pairing): ?>
-                                    <button type="button" 
-                                            onclick="applyFontPairing('<?php echo $pairing['heading']; ?>', '<?php echo $pairing['body']; ?>')"
-                                            class="w-full text-left px-3 py-2 text-xs bg-gray-100 hover:bg-blue-50 rounded-lg transition group">
-                                        <span class="font-medium text-gray-700 group-hover:text-blue-600">
-                                            <?php echo $pairing['heading']; ?> + <?php echo $pairing['body']; ?>
-                                        </span>
-                                        <span class="block text-gray-500"><?php echo $pairing['style']; ?></span>
+                            <!-- Color Presets -->
+                            <div class="mb-5">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Quick Color Presets</label>
+                                <div class="flex flex-wrap gap-2">
+                                    <button type="button" onclick="applyColorPreset('#EF4444', '#B91C1C', '#F59E0B')" 
+                                            class="px-3 py-1.5 text-xs font-medium rounded-lg border-2 border-orange-200 hover:border-orange-400 transition-all" 
+                                            style="background: linear-gradient(135deg, #FED7AA 0%, #FDBA74 100%);">
+                                        <span class="text-orange-800">🏪 Sari-Sari</span>
                                     </button>
-                                    <?php endforeach; ?>
+                                    <button type="button" onclick="applyColorPreset('#DC2626', '#991B1B', '#22C55E')" 
+                                            class="px-3 py-1.5 text-xs font-medium rounded-lg border-2 border-red-200 hover:border-red-400 transition-all"
+                                            style="background: linear-gradient(135deg, #FECACA 0%, #FCA5A5 100%);">
+                                        <span class="text-red-800">🍲 Carinderia</span>
+                                    </button>
+                                    <button type="button" onclick="applyColorPreset('#0D9488', '#0F766E', '#06B6D4')" 
+                                            class="px-3 py-1.5 text-xs font-medium rounded-lg border-2 border-teal-200 hover:border-teal-400 transition-all"
+                                            style="background: linear-gradient(135deg, #CCFBF1 0%, #99F6E4 100%);">
+                                        <span class="text-teal-800">🔧 Services</span>
+                                    </button>
+                                    <button type="button" onclick="applyColorPreset('#3B82F6', '#1D4ED8', '#8B5CF6')" 
+                                            class="px-3 py-1.5 text-xs font-medium rounded-lg border-2 border-blue-200 hover:border-blue-400 transition-all"
+                                            style="background: linear-gradient(135deg, #DBEAFE 0%, #BFDBFE 100%);">
+                                        <span class="text-blue-800">🛍️ Retail</span>
+                                    </button>
+                                    <button type="button" onclick="applyColorPreset('#7C3AED', '#5B21B6', '#EC4899')" 
+                                            class="px-3 py-1.5 text-xs font-medium rounded-lg border-2 border-purple-200 hover:border-purple-400 transition-all"
+                                            style="background: linear-gradient(135deg, #EDE9FE 0%, #DDD6FE 100%);">
+                                        <span class="text-purple-800">💼 Freelancer</span>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Primary Color</label>
+                                    <div class="flex items-center space-x-3">
+                                        <input type="color" name="primary_color" id="primaryColor" value="<?php echo $site['primary_color'] ?? '#3B82F6'; ?>"
+                                               class="w-12 h-10 rounded cursor-pointer border" onchange="syncColorText(this)">
+                                        <input type="text" id="primaryColorText" value="<?php echo $site['primary_color'] ?? '#3B82F6'; ?>"
+                                               class="flex-1 px-3 py-2 border rounded text-sm bg-gray-50" readonly>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Secondary Color</label>
+                                    <div class="flex items-center space-x-3">
+                                        <input type="color" name="secondary_color" id="secondaryColor" value="<?php echo $site['secondary_color'] ?? '#1E40AF'; ?>"
+                                               class="w-12 h-10 rounded cursor-pointer border" onchange="syncColorText(this)">
+                                        <input type="text" id="secondaryColorText" value="<?php echo $site['secondary_color'] ?? '#1E40AF'; ?>"
+                                               class="flex-1 px-3 py-2 border rounded text-sm bg-gray-50" readonly>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Accent Color</label>
+                                    <div class="flex items-center space-x-3">
+                                        <input type="color" name="accent_color" id="accentColor" value="<?php echo $site['accent_color'] ?? '#F59E0B'; ?>"
+                                               class="w-12 h-10 rounded cursor-pointer border" onchange="syncColorText(this)">
+                                        <input type="text" id="accentColorText" value="<?php echo $site['accent_color'] ?? '#F59E0B'; ?>"
+                                               class="flex-1 px-3 py-2 border rounded text-sm bg-gray-50" readonly>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Typography -->
+                        <?php 
+                        $availableFonts = getAvailableFonts();
+                        $currentHeadingFont = $site['font_heading'] ?? 'Inter';
+                        $currentBodyFont = $site['font_body'] ?? 'Inter';
+                        ?>
+                        <div class="bg-white rounded-xl shadow p-6">
+                            <h2 class="text-lg font-bold text-gray-800 mb-4">
+                                <i class="fas fa-font text-primary mr-2"></i>Typography
+                            </h2>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Heading Font</label>
+                                    <select name="font_heading" id="fontHeading" 
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
+                                            onchange="updateFontPreview()">
+                                        <?php foreach ($availableFonts as $fontName => $fontData): ?>
+                                        <option value="<?php echo htmlspecialchars($fontName); ?>" 
+                                                data-category="<?php echo $fontData['category']; ?>"
+                                                <?php echo $currentHeadingFont === $fontName ? 'selected' : ''; ?>>
+                                            <?php echo htmlspecialchars($fontData['label']); ?>
+                                        </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Body Font</label>
+                                    <select name="font_body" id="fontBody"
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
+                                            onchange="updateFontPreview()">
+                                        <?php foreach ($availableFonts as $fontName => $fontData): ?>
+                                        <option value="<?php echo htmlspecialchars($fontName); ?>"
+                                                data-category="<?php echo $fontData['category']; ?>"
+                                                <?php echo $currentBodyFont === $fontName ? 'selected' : ''; ?>>
+                                            <?php echo htmlspecialchars($fontData['label']); ?>
+                                        </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                                
+                                <div class="border rounded-lg p-4 bg-gray-50">
+                                    <p class="text-xs text-gray-500 mb-2">Preview</p>
+                                    <h3 id="fontPreviewHeading" class="text-lg font-bold text-gray-800 mb-1" style="font-family: '<?php echo $currentHeadingFont; ?>', sans-serif;">
+                                        Your Heading
+                                    </h3>
+                                    <p id="fontPreviewBody" class="text-sm text-gray-600" style="font-family: '<?php echo $currentBodyFont; ?>', sans-serif;">
+                                        Body text preview.
+                                    </p>
                                 </div>
                             </div>
                         </div>
                     </div>
                     
-                    <!-- Actions (Preview) -->
+                    <!-- Step 1 Navigation -->
                     <div class="bg-white rounded-xl shadow p-6">
-                        <h2 class="text-lg font-bold text-gray-800 mb-4">Quick Actions</h2>
-                        <div class="space-y-3">
+                        <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
                             <a href="preview-site.php?id=<?php echo $siteId; ?>" target="_blank"
-                               class="block w-full text-center border-2 border-primary text-primary py-3 rounded-lg font-semibold hover:bg-primary hover:text-white transition">
+                               class="text-primary hover:text-blue-700 font-medium">
                                 <i class="fas fa-eye mr-2"></i>Preview Site
                             </a>
-                        </div>
-                    </div>
-                    
-                    <!-- Help -->
-                    <div class="bg-blue-50 rounded-xl p-6">
-                        <h3 class="font-semibold text-blue-800 mb-2">
-                            <i class="fas <?php echo $hints['icon']; ?> mr-2"></i>Tips for <?php echo htmlspecialchars($site['template_name']); ?>
-                        </h3>
-                        <?php if ($templateId == 1): // Modern Retail ?>
-                        <ul class="text-sm text-blue-700 space-y-2">
-                            <li>• Keep headlines elegant and minimal</li>
-                            <li>• Feature your best-selling products</li>
-                            <li>• Use high-quality product images</li>
-                            <li>• Highlight promotions and discounts</li>
-                        </ul>
-                        <?php elseif ($templateId == 2): // Restaurant ?>
-                        <ul class="text-sm text-blue-700 space-y-2">
-                            <li>• Use mouth-watering food descriptions</li>
-                            <li>• Include your operating hours</li>
-                            <li>• Mention signature dishes prominently</li>
-                            <li>• Add reservation/delivery info in contact</li>
-                        </ul>
-                        <?php elseif ($templateId == 3): // Freelancer ?>
-                        <ul class="text-sm text-blue-700 space-y-2">
-                            <li>• Lead with your strongest skill</li>
-                            <li>• Showcase 3-4 best projects</li>
-                            <li>• Include your availability status</li>
-                            <li>• Make contacting you easy</li>
-                        </ul>
-                        <?php elseif ($templateId == 4): // Service Business ?>
-                        <ul class="text-sm text-blue-700 space-y-2">
-                            <li>• Build trust with your experience stats</li>
-                            <li>• List all services clearly</li>
-                            <li>• Include testimonials if possible</li>
-                            <li>• Add multiple contact options</li>
-                        </ul>
-                        <?php elseif ($templateId == 7): // Urban Streetwear ?>
-                        <ul class="text-sm text-blue-700 space-y-2">
-                            <li>• Keep text bold and minimal</li>
-                            <li>• Use ALL CAPS for impact</li>
-                            <li>• Create urgency with "limited drops"</li>
-                            <li>• Include your social media handles</li>
-                        </ul>
-                        <?php elseif ($templateId == 8): // Tech Startup ?>
-                        <ul class="text-sm text-blue-700 space-y-2">
-                            <li>• Focus on the problem you solve</li>
-                            <li>• Use clear, jargon-free language</li>
-                            <li>• Highlight key features with benefits</li>
-                            <li>• Include a clear call-to-action</li>
-                        </ul>
-                        <?php else: // Default ?>
-                        <ul class="text-sm text-blue-700 space-y-2">
-                            <li>• Keep your hero title short and impactful</li>
-                            <li>• Use bullet points in your services section</li>
-                            <li>• Include all contact methods customers might use</li>
-                        </ul>
-                        <?php endif; ?>
-                    </div>
-                    
-                    <!-- Template Info -->
-                    <div class="bg-gray-50 rounded-xl p-6">
-                        <h3 class="font-semibold text-gray-800 mb-2">
-                            <i class="fas fa-info-circle mr-2"></i>Current Template
-                        </h3>
-                        <p class="text-sm text-gray-600 mb-3"><?php echo htmlspecialchars($site['template_name']); ?></p>
-                        <a href="select-template.php" class="text-primary text-sm hover:underline">
-                            <i class="fas fa-exchange-alt mr-1"></i>Change Template
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </form>
-        
-        <!-- Images Section (Separate Forms for File Uploads) -->
-        <div class="grid lg:grid-cols-3 gap-8 mt-8">
-            <div class="lg:col-span-2 space-y-6">
-                <!-- Logo Upload -->
-                <div class="bg-white rounded-xl shadow p-6">
-                    <h2 class="text-lg font-bold text-gray-800 mb-4">
-                        <i class="fas fa-image text-primary mr-2"></i>Site Logo
-                    </h2>
-                    
-                    <?php if ($logoImage): ?>
-                    <div class="mb-4">
-                        <div class="relative inline-block">
-                            <img src="../<?php echo htmlspecialchars($logoImage['image_path']); ?>" 
-                                 alt="<?php echo htmlspecialchars($logoImage['alt_text'] ?? 'Logo'); ?>"
-                                 class="h-24 w-auto object-contain rounded-lg border bg-gray-50 p-2">
-                            <form method="POST" action="" class="absolute -top-2 -right-2">
-                                <input type="hidden" name="action" value="delete_image">
-                                <input type="hidden" name="image_id" value="<?php echo $logoImage['id']; ?>">
-                                <button type="submit" onclick="return confirm('Delete this logo?')"
-                                        class="w-6 h-6 bg-red-500 text-white rounded-full text-xs hover:bg-red-600 transition shadow">
-                                    <i class="fas fa-times"></i>
+                            <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                                <button type="submit" 
+                                        class="w-full sm:w-auto bg-green-500 text-white px-8 py-3 rounded-lg font-semibold hover:bg-green-600 transition flex items-center justify-center">
+                                    <i class="fas fa-save mr-2"></i>Save Changes
                                 </button>
-                            </form>
-                        </div>
-                        <p class="text-xs text-gray-500 mt-2">Current logo uploaded</p>
-                    </div>
-                    <?php endif; ?>
-                    
-                    <form method="POST" action="" enctype="multipart/form-data" class="space-y-3">
-                        <input type="hidden" name="action" value="upload_image">
-                        <input type="hidden" name="image_type" value="logo">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Upload Logo</label>
-                            <input type="file" name="image" accept="image/jpeg,image/png,image/gif,image/webp"
-                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent
-                                          file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium
-                                          file:bg-primary file:text-white hover:file:bg-blue-600 file:cursor-pointer">
-                            <p class="text-xs text-gray-500 mt-1">Recommended: PNG with transparent background, max 5MB</p>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Alt Text</label>
-                            <input type="text" name="alt_text" placeholder="e.g., Company Logo"
-                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm">
-                        </div>
-                        <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition">
-                            <i class="fas fa-upload mr-2"></i>Upload Logo
-                        </button>
-                    </form>
-                </div>
-                
-                <!-- Hero Image Upload -->
-                <div class="bg-white rounded-xl shadow p-6">
-                    <h2 class="text-lg font-bold text-gray-800 mb-4">
-                        <i class="fas fa-panorama text-primary mr-2"></i>Hero/Banner Image
-                    </h2>
-                    
-                    <?php if ($heroImage): ?>
-                    <div class="mb-4">
-                        <div class="relative">
-                            <img src="../<?php echo htmlspecialchars($heroImage['image_path']); ?>" 
-                                 alt="<?php echo htmlspecialchars($heroImage['alt_text'] ?? 'Hero Image'); ?>"
-                                 class="w-full max-h-48 object-cover rounded-lg border">
-                            <form method="POST" action="" class="absolute top-2 right-2">
-                                <input type="hidden" name="action" value="delete_image">
-                                <input type="hidden" name="image_id" value="<?php echo $heroImage['id']; ?>">
-                                <button type="submit" onclick="return confirm('Delete this hero image?')"
-                                        class="w-8 h-8 bg-red-500 text-white rounded-full text-sm hover:bg-red-600 transition shadow-lg">
-                                    <i class="fas fa-trash"></i>
+                                <button type="button" onclick="goToStep(2)" 
+                                        class="w-full sm:w-auto gradient-bg text-white px-8 py-3 rounded-lg font-semibold hover:opacity-90 transition flex items-center justify-center">
+                                    Next: Submit for Design
+                                    <i class="fas fa-arrow-right ml-2"></i>
                                 </button>
-                            </form>
-                        </div>
-                        <p class="text-xs text-gray-500 mt-2">Current hero image</p>
-                    </div>
-                    <?php endif; ?>
-                    
-                    <form method="POST" action="" enctype="multipart/form-data" class="space-y-3">
-                        <input type="hidden" name="action" value="upload_image">
-                        <input type="hidden" name="image_type" value="hero">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Upload Hero Image</label>
-                            <input type="file" name="image" accept="image/jpeg,image/png,image/gif,image/webp"
-                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent
-                                          file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium
-                                          file:bg-primary file:text-white hover:file:bg-blue-600 file:cursor-pointer">
-                            <p class="text-xs text-gray-500 mt-1">Recommended: 1920x800px or larger, max 5MB</p>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Alt Text</label>
-                            <input type="text" name="alt_text" placeholder="e.g., Welcome to our store"
-                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm">
-                        </div>
-                        <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition">
-                            <i class="fas fa-upload mr-2"></i>Upload Hero Image
-                        </button>
-                    </form>
-                </div>
-                
-                <!-- Gallery Images -->
-                <div class="bg-white rounded-xl shadow p-6">
-                    <h2 class="text-lg font-bold text-gray-800 mb-4">
-                        <i class="fas fa-images text-primary mr-2"></i>Gallery Images
-                        <span class="text-sm font-normal text-gray-500">(<?php echo count($galleryImages); ?> images)</span>
-                    </h2>
-                    
-                    <?php if (!empty($galleryImages)): ?>
-                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mb-6">
-                        <?php foreach ($galleryImages as $index => $galleryImg): ?>
-                        <div class="relative group">
-                            <img src="../<?php echo htmlspecialchars($galleryImg['image_path']); ?>" 
-                                 alt="<?php echo htmlspecialchars($galleryImg['alt_text'] ?? 'Gallery Image'); ?>"
-                                 class="w-full h-32 object-cover rounded-lg border">
-                            <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition rounded-lg flex items-center justify-center gap-2">
-                                <form method="POST" action="">
-                                    <input type="hidden" name="action" value="delete_image">
-                                    <input type="hidden" name="image_id" value="<?php echo $galleryImg['id']; ?>">
-                                    <button type="submit" onclick="return confirm('Delete this image?')"
-                                            class="w-8 h-8 bg-red-500 text-white rounded-full text-sm hover:bg-red-600 transition">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </form>
                             </div>
-                            <span class="absolute bottom-1 right-1 bg-black/60 text-white text-xs px-2 py-0.5 rounded">#<?php echo $index + 1; ?></span>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Step 2: Submit for Design -->
+        <div id="step2Content" class="step-content hidden">
+            <div class="space-y-6">
+                
+                <!-- Info Banner -->
+                <div class="bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl p-6 text-white">
+                    <div class="flex items-start gap-4">
+                        <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-magic text-2xl"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-xl font-bold mb-2">Let Us Design Your Website!</h2>
+                            <p class="text-white/90">
+                                Upload your logo, images, and design preferences. Our team will professionally design your website within 24-48 hours.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Design Request Form -->
+                <div class="bg-white rounded-xl shadow p-6">
+                    <h2 class="text-lg font-bold text-gray-800 mb-6">
+                        <i class="fas fa-paper-plane text-primary mr-2"></i>Submit Design Request
+                    </h2>
+                    
+                    <form method="POST" action="" enctype="multipart/form-data" id="designRequestForm">
+                        <input type="hidden" name="action" value="submit_design_request">
+                        
+                        <div class="space-y-6">
+                            <!-- Request Type -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-3">What do you need?</label>
+                                <div class="grid sm:grid-cols-3 gap-3">
+                                    <label class="relative flex items-center p-4 border-2 border-primary bg-primary/5 rounded-xl cursor-pointer hover:border-primary transition group">
+                                        <input type="radio" name="request_type" value="full_design" checked class="sr-only">
+                                        <div class="flex items-center">
+                                            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3 group-hover:scale-110 transition">
+                                                <i class="fas fa-paint-brush text-blue-600"></i>
+                                            </div>
+                                            <div>
+                                                <div class="font-semibold text-gray-800">Full Design</div>
+                                                <div class="text-xs text-gray-500">Complete website setup</div>
+                                            </div>
+                                        </div>
+                                    </label>
+                                    
+                                    <label class="relative flex items-center p-4 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-primary transition group">
+                                        <input type="radio" name="request_type" value="logo_upload" class="sr-only">
+                                        <div class="flex items-center">
+                                            <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-3 group-hover:scale-110 transition">
+                                                <i class="fas fa-image text-green-600"></i>
+                                            </div>
+                                            <div>
+                                                <div class="font-semibold text-gray-800">Add Images</div>
+                                                <div class="text-xs text-gray-500">Logo & photos only</div>
+                                            </div>
+                                        </div>
+                                    </label>
+                                    
+                                    <label class="relative flex items-center p-4 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-primary transition group">
+                                        <input type="radio" name="request_type" value="revision" class="sr-only">
+                                        <div class="flex items-center">
+                                            <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center mr-3 group-hover:scale-110 transition">
+                                                <i class="fas fa-sync text-orange-600"></i>
+                                            </div>
+                                            <div>
+                                                <div class="font-semibold text-gray-800">Revision</div>
+                                                <div class="text-xs text-gray-500">Update existing design</div>
+                                            </div>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <!-- File Uploads -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fas fa-cloud-upload-alt mr-2"></i>Upload Your Assets
+                                </label>
+                                <div class="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-primary transition bg-gray-50">
+                                    <input type="file" name="design_files[]" id="designFiles" multiple 
+                                           accept="image/*,.pdf,.zip"
+                                           class="hidden" onchange="updateFileList()">
+                                    <label for="designFiles" class="cursor-pointer">
+                                        <div class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                                            <i class="fas fa-upload text-2xl text-primary"></i>
+                                        </div>
+                                        <p class="text-gray-700 font-medium mb-1">Click to upload or drag and drop</p>
+                                        <p class="text-gray-500 text-sm">Logo, product photos, banners, etc.</p>
+                                        <p class="text-gray-400 text-xs mt-2">PNG, JPG, PDF, ZIP up to 10MB each</p>
+                                    </label>
+                                </div>
+                                <div id="fileList" class="mt-3 space-y-2"></div>
+                            </div>
+                            
+                            <!-- Design Notes -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fas fa-comment-alt mr-2"></i>Design Notes & Instructions
+                                </label>
+                                <textarea name="design_notes" rows="5"
+                                          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                                          placeholder="Tell us about your design preferences:
+• What colors do you prefer?
+• Any specific style (modern, classic, minimalist)?
+• Reference websites you like?
+• Any special instructions for images?
+• Preferred arrangement or layout?"></textarea>
+                            </div>
+                            
+                            <!-- Priority -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Priority</label>
+                                <select name="priority" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                                    <option value="normal">Normal (24-48 hours)</option>
+                                    <option value="high">High Priority (12-24 hours)</option>
+                                    <option value="low">Low (3-5 days)</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Submit Button -->
+                            <button type="submit" 
+                                    class="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-4 rounded-xl font-bold text-lg hover:from-purple-600 hover:to-pink-600 transition shadow-lg">
+                                <i class="fas fa-paper-plane mr-2"></i>Submit Design Request
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- Previous Requests -->
+                <?php if (!empty($existingRequests)): ?>
+                <div class="bg-white rounded-xl shadow p-6">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4">
+                        <i class="fas fa-history text-primary mr-2"></i>Your Design Requests
+                    </h3>
+                    <div class="space-y-3">
+                        <?php foreach ($existingRequests as $request): ?>
+                        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                            <div>
+                                <div class="font-medium text-gray-800">
+                                    <?php echo htmlspecialchars($request['reference_number'] ?? 'Request #' . $request['id']); ?>
+                                </div>
+                                <div class="text-sm text-gray-500">
+                                    <?php echo ucfirst(str_replace('_', ' ', $request['request_type'])); ?> •
+                                    <?php echo date('M j, Y', strtotime($request['created_at'])); ?>
+                                </div>
+                            </div>
+                            <span class="px-3 py-1 rounded-full text-sm font-medium
+                                <?php 
+                                switch($request['status']) {
+                                    case 'pending': echo 'bg-yellow-100 text-yellow-700'; break;
+                                    case 'in_progress': echo 'bg-blue-100 text-blue-700'; break;
+                                    case 'completed': echo 'bg-green-100 text-green-700'; break;
+                                    case 'rejected': echo 'bg-red-100 text-red-700'; break;
+                                    default: echo 'bg-gray-100 text-gray-700';
+                                }
+                                ?>">
+                                <?php echo ucfirst(str_replace('_', ' ', $request['status'])); ?>
+                            </span>
                         </div>
                         <?php endforeach; ?>
                     </div>
-                    <?php else: ?>
-                    <div class="text-center py-8 bg-gray-50 rounded-lg mb-4">
-                        <i class="fas fa-images text-4xl text-gray-300 mb-2"></i>
-                        <p class="text-gray-500 text-sm">No gallery images yet</p>
-                    </div>
-                    <?php endif; ?>
-                    
-                    <form method="POST" action="" enctype="multipart/form-data" class="space-y-3">
-                        <input type="hidden" name="action" value="upload_image">
-                        <input type="hidden" name="image_type" value="gallery">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Add Gallery Image</label>
-                            <input type="file" name="image" accept="image/jpeg,image/png,image/gif,image/webp"
-                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent
-                                          file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium
-                                          file:bg-primary file:text-white hover:file:bg-blue-600 file:cursor-pointer">
-                            <p class="text-xs text-gray-500 mt-1">Upload images for your product gallery or portfolio, max 5MB each</p>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Alt Text</label>
-                            <input type="text" name="alt_text" placeholder="e.g., Product showcase"
-                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm">
-                        </div>
-                        <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition">
-                            <i class="fas fa-plus mr-2"></i>Add to Gallery
-                        </button>
-                    </form>
                 </div>
-            </div>
-            
-            <!-- Sidebar for Images Section -->
-            <div class="space-y-6">
-                <!-- Publishing Section -->
-                <div class="bg-white rounded-xl shadow p-6">
-                    <h2 class="text-lg font-bold text-gray-800 mb-4">
-                        <i class="fas fa-globe text-primary mr-2"></i>Publishing
-                    </h2>
-                    
-                    <?php if ($site['status'] === 'active' && !empty($site['subdomain'])): ?>
-                    <!-- Published State -->
-                    <div class="mb-4">
-                        <div class="flex items-center mb-3">
-                            <span class="inline-flex items-center px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
-                                <i class="fas fa-check-circle mr-2"></i>Published
-                            </span>
-                        </div>
-                        <?php if (!empty($site['published_at'])): ?>
-                        <p class="text-xs text-gray-500 mb-3">
-                            <i class="fas fa-clock mr-1"></i>Published: <?php echo date('M j, Y g:i A', strtotime($site['published_at'])); ?>
-                        </p>
-                        <?php endif; ?>
-                        
-                        <!-- Public URL -->
-                        <div class="bg-gray-50 rounded-lg p-3 mb-4">
-                            <label class="block text-xs font-medium text-gray-500 mb-1">Public URL</label>
-                            <div class="flex items-center gap-2">
-                                <input type="text" id="publicUrl" readonly 
-                                       value="<?php echo htmlspecialchars(getPublicSiteUrl($site['subdomain'])); ?>"
-                                       class="flex-1 text-xs bg-white px-2 py-1.5 border rounded truncate">
-                                <button type="button" onclick="copyPublicUrl()" 
-                                        class="px-2 py-1.5 bg-primary text-white rounded text-xs hover:bg-blue-600 transition"
-                                        title="Copy URL">
-                                    <i class="fas fa-copy"></i>
-                                </button>
-                                <a href="<?php echo htmlspecialchars(getPublicSiteUrl($site['subdomain'])); ?>" target="_blank"
-                                   class="px-2 py-1.5 bg-gray-200 text-gray-700 rounded text-xs hover:bg-gray-300 transition"
-                                   title="Open in new tab">
-                                    <i class="fas fa-external-link-alt"></i>
-                                </a>
-                            </div>
-                        </div>
-                        
-                        <!-- Update Subdomain -->
-                        <form method="POST" action="" class="mb-4">
-                            <input type="hidden" name="action" value="update_subdomain">
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Subdomain</label>
-                            <div class="flex gap-2">
-                                <input type="text" name="subdomain" 
-                                       value="<?php echo htmlspecialchars($site['subdomain']); ?>"
-                                       pattern="[a-z0-9][a-z0-9-]*[a-z0-9]|[a-z0-9]"
-                                       class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
-                                       placeholder="my-business">
-                                <button type="submit" class="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm hover:bg-gray-300 transition">
-                                    <i class="fas fa-save"></i>
-                                </button>
-                            </div>
-                            <p class="text-xs text-gray-500 mt-1">Lowercase letters, numbers, and hyphens only</p>
-                        </form>
-                        
-                        <!-- Unpublish Button -->
-                        <form method="POST" action="" onsubmit="return confirm('Are you sure you want to unpublish this site? It will no longer be accessible via the public URL.');">
-                            <input type="hidden" name="action" value="unpublish_site">
-                            <button type="submit" class="w-full border-2 border-red-500 text-red-500 py-2 rounded-lg font-medium hover:bg-red-500 hover:text-white transition text-sm">
-                                <i class="fas fa-eye-slash mr-2"></i>Unpublish Site
-                            </button>
-                        </form>
-                    </div>
-                    
-                    <?php else: ?>
-                    <!-- Draft State -->
-                    <div class="mb-4">
-                        <div class="flex items-center mb-3">
-                            <span class="inline-flex items-center px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-sm font-medium">
-                                <i class="fas fa-file-alt mr-2"></i>Draft
-                            </span>
-                        </div>
-                        <p class="text-sm text-gray-600 mb-4">
-                            Publish your site to make it accessible via a public URL that you can share with customers.
-                        </p>
-                        
-                        <form method="POST" action="" id="publishForm">
-                            <input type="hidden" name="action" value="publish_site">
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Choose your URL</label>
-                            <div class="mb-3">
-                                <div class="flex items-center bg-gray-100 rounded-lg overflow-hidden border">
-                                    <span class="px-3 py-2 text-gray-500 text-sm bg-gray-200">site/</span>
-                                    <input type="text" name="subdomain" id="subdomainInput"
-                                           value="<?php echo htmlspecialchars($site['subdomain'] ?? generateSubdomain($site['site_name'] ?? 'my-site')); ?>"
-                                           pattern="[a-z0-9][a-z0-9-]*[a-z0-9]|[a-z0-9]"
-                                           class="flex-1 px-3 py-2 text-sm border-0 focus:ring-0 focus:outline-none"
-                                           placeholder="my-business">
-                                </div>
-                                <p class="text-xs text-gray-500 mt-1">3-50 characters: lowercase letters, numbers, hyphens</p>
-                            </div>
-                            <button type="submit" class="w-full bg-green-500 text-white py-3 rounded-lg font-semibold hover:bg-green-600 transition">
-                                <i class="fas fa-rocket mr-2"></i>Publish Site
-                            </button>
-                        </form>
-                    </div>
-                    <?php endif; ?>
-                </div>
+                <?php endif; ?>
                 
-                <!-- Actions -->
-                <div class="bg-white rounded-xl shadow p-6">
-                    <h2 class="text-lg font-bold text-gray-800 mb-4">Actions</h2>
-                    <div class="space-y-3">
-                        <a href="preview-site.php?id=<?php echo $siteId; ?>" target="_blank"
-                           class="block w-full text-center border-2 border-primary text-primary py-3 rounded-lg font-semibold hover:bg-primary hover:text-white transition">
-                            <i class="fas fa-eye mr-2"></i>Preview Site
-                        </a>
-                        <?php if ($site['status'] === 'active' && !empty($site['subdomain'])): ?>
-                        <a href="<?php echo htmlspecialchars(getPublicSiteUrl($site['subdomain'])); ?>" target="_blank"
-                           class="block w-full text-center bg-green-500 text-white py-3 rounded-lg font-semibold hover:bg-green-600 transition">
-                            <i class="fas fa-globe mr-2"></i>View Live Site
-                        </a>
-                        <?php endif; ?>
-                    </div>
-                </div>
-                
-                <!-- Image Upload Tips -->
-                <div class="bg-green-50 rounded-xl p-6">
-                    <h3 class="font-semibold text-green-800 mb-2">
-                        <i class="fas fa-camera mr-2"></i>Image Tips
+                <!-- How It Works -->
+                <div class="bg-blue-50 rounded-xl p-6">
+                    <h3 class="font-semibold text-blue-800 mb-4">
+                        <i class="fas fa-info-circle mr-2"></i>How It Works
                     </h3>
-                    <ul class="text-sm text-green-700 space-y-2">
-                        <li>• Logo: Use PNG with transparent background</li>
-                        <li>• Hero: 1920x800px landscape for best results</li>
-                        <li>• Gallery: Square or portrait images work best</li>
-                        <li>• Keep file sizes under 5MB</li>
-                    </ul>
+                    <div class="grid sm:grid-cols-4 gap-4">
+                        <div class="text-center">
+                            <div class="w-10 h-10 bg-blue-500 text-white rounded-full flex items-center justify-center mx-auto mb-2 font-bold">1</div>
+                            <p class="text-sm text-blue-700">Upload your logo & images</p>
+                        </div>
+                        <div class="text-center">
+                            <div class="w-10 h-10 bg-blue-500 text-white rounded-full flex items-center justify-center mx-auto mb-2 font-bold">2</div>
+                            <p class="text-sm text-blue-700">Tell us your preferences</p>
+                        </div>
+                        <div class="text-center">
+                            <div class="w-10 h-10 bg-blue-500 text-white rounded-full flex items-center justify-center mx-auto mb-2 font-bold">3</div>
+                            <p class="text-sm text-blue-700">We design your site</p>
+                        </div>
+                        <div class="text-center">
+                            <div class="w-10 h-10 bg-blue-500 text-white rounded-full flex items-center justify-center mx-auto mb-2 font-bold">4</div>
+                            <p class="text-sm text-blue-700">Review & approve</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Step 2 Navigation -->
+                <div class="bg-white rounded-xl shadow p-6">
+                    <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
+                        <button type="button" onclick="goToStep(1)" 
+                                class="text-gray-600 hover:text-gray-800 font-medium">
+                            <i class="fas fa-arrow-left mr-2"></i>Back to Content
+                        </button>
+                        <a href="preview-site.php?id=<?php echo $siteId; ?>" target="_blank"
+                           class="text-primary hover:text-blue-700 font-medium">
+                            <i class="fas fa-eye mr-2"></i>Preview Current Site
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -911,64 +850,70 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!isset($_POST['action']) || $_POST
 </section>
 
 <script>
-// Copy public URL to clipboard
-function copyPublicUrl() {
-    const urlInput = document.getElementById('publicUrl');
-    if (urlInput) {
-        navigator.clipboard.writeText(urlInput.value).then(function() {
-            // Show feedback
-            const btn = event.target.closest('button');
-            const originalHtml = btn.innerHTML;
-            btn.innerHTML = '<i class="fas fa-check"></i>';
-            btn.classList.remove('bg-primary');
-            btn.classList.add('bg-green-500');
-            setTimeout(function() {
-                btn.innerHTML = originalHtml;
-                btn.classList.remove('bg-green-500');
-                btn.classList.add('bg-primary');
-            }, 2000);
-        }).catch(function() {
-            // Fallback for older browsers
-            urlInput.select();
-            document.execCommand('copy');
-        });
+// Multi-step form navigation
+let currentStep = 1;
+
+function goToStep(step) {
+    currentStep = step;
+    
+    document.querySelectorAll('.step-content').forEach(el => el.classList.add('hidden'));
+    document.getElementById('step' + step + 'Content').classList.remove('hidden');
+    
+    const progressBar = document.getElementById('progressBar');
+    const stepIndicator = document.getElementById('stepIndicator');
+    const step1Dot = document.getElementById('step1Dot');
+    const step2Dot = document.getElementById('step2Dot');
+    const step2Label = document.getElementById('step2Label');
+    
+    if (step === 1) {
+        progressBar.style.width = '50%';
+        stepIndicator.textContent = 'Step 1 of 2';
+        step1Dot.className = 'w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center text-sm font-semibold shadow-lg';
+        step2Dot.className = 'w-8 h-8 rounded-full bg-gray-300 text-gray-500 flex items-center justify-center text-sm font-semibold';
+        step2Label.className = 'mr-2 text-sm font-medium text-gray-400';
+    } else {
+        progressBar.style.width = '100%';
+        stepIndicator.textContent = 'Step 2 of 2';
+        step1Dot.className = 'w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center text-sm font-semibold shadow-lg';
+        step2Dot.className = 'w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center text-sm font-semibold shadow-lg';
+        step2Label.className = 'mr-2 text-sm font-medium text-blue-600';
     }
+    
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// Auto-format subdomain input
-document.addEventListener('DOMContentLoaded', function() {
-    const subdomainInput = document.getElementById('subdomainInput');
-    if (subdomainInput) {
-        subdomainInput.addEventListener('input', function(e) {
-            // Convert to lowercase and replace invalid characters
-            let value = e.target.value.toLowerCase();
-            value = value.replace(/[^a-z0-9-]/g, '');
-            value = value.replace(/--+/g, '-');
-            e.target.value = value;
-        });
+// File upload handling
+function updateFileList() {
+    const input = document.getElementById('designFiles');
+    const fileList = document.getElementById('fileList');
+    fileList.innerHTML = '';
+    
+    if (input.files.length > 0) {
+        for (let i = 0; i < input.files.length; i++) {
+            const file = input.files[i];
+            const size = (file.size / 1024 / 1024).toFixed(2);
+            const div = document.createElement('div');
+            div.className = 'flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200';
+            div.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas fa-file-image text-green-500 mr-3"></i>
+                    <div>
+                        <div class="font-medium text-gray-800 text-sm">${file.name}</div>
+                        <div class="text-xs text-gray-500">${size} MB</div>
+                    </div>
+                </div>
+                <i class="fas fa-check-circle text-green-500"></i>
+            `;
+            fileList.appendChild(div);
+        }
     }
-    
-    // Also handle the update subdomain input
-    const updateSubdomainInputs = document.querySelectorAll('input[name="subdomain"]');
-    updateSubdomainInputs.forEach(function(input) {
-        input.addEventListener('input', function(e) {
-            let value = e.target.value.toLowerCase();
-            value = value.replace(/[^a-z0-9-]/g, '');
-            value = value.replace(/--+/g, '-');
-            e.target.value = value;
-        });
-    });
-    
-    // Initialize font preview
-    updateFontPreview();
-});
+}
 
 // Font preview functionality
 let loadedFonts = new Set();
 
 function loadGoogleFont(fontName) {
     if (loadedFonts.has(fontName)) return;
-    
     const link = document.createElement('link');
     link.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(fontName)}:wght@400;500;600;700&display=swap`;
     link.rel = 'stylesheet';
@@ -988,26 +933,74 @@ function updateFontPreview() {
         const headingCategory = headingSelect.options[headingSelect.selectedIndex].dataset.category || 'sans-serif';
         const bodyCategory = bodySelect.options[bodySelect.selectedIndex].dataset.category || 'sans-serif';
         
-        // Load fonts dynamically
         loadGoogleFont(headingFont);
         loadGoogleFont(bodyFont);
         
-        // Apply to preview
         headingPreview.style.fontFamily = `'${headingFont}', ${headingCategory}`;
         bodyPreview.style.fontFamily = `'${bodyFont}', ${bodyCategory}`;
     }
 }
 
-function applyFontPairing(headingFont, bodyFont) {
-    const headingSelect = document.getElementById('fontHeading');
-    const bodySelect = document.getElementById('fontBody');
+// Color preset functionality
+function applyColorPreset(primary, secondary, accent) {
+    document.getElementById('primaryColor').value = primary;
+    document.getElementById('secondaryColor').value = secondary;
+    document.getElementById('accentColor').value = accent;
     
-    if (headingSelect && bodySelect) {
-        headingSelect.value = headingFont;
-        bodySelect.value = bodyFont;
-        updateFontPreview();
+    syncColorText(document.getElementById('primaryColor'));
+    syncColorText(document.getElementById('secondaryColor'));
+    syncColorText(document.getElementById('accentColor'));
+    
+    showToast('Color preset applied!', 'success');
+}
+
+function syncColorText(colorInput) {
+    const textId = colorInput.id + 'Text';
+    const textInput = document.getElementById(textId);
+    if (textInput) {
+        textInput.value = colorInput.value.toUpperCase();
     }
 }
+
+// Toast notification
+function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    const bgColor = type === 'success' ? 'bg-green-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500';
+    toast.className = `fixed bottom-4 right-4 ${bgColor} text-white px-6 py-3 rounded-lg shadow-lg z-50 transform transition-all duration-300 translate-y-full opacity-0`;
+    toast.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'info-circle'} mr-2"></i>${message}`;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => toast.classList.remove('translate-y-full', 'opacity-0'), 10);
+    setTimeout(() => {
+        toast.classList.add('translate-y-full', 'opacity-0');
+        setTimeout(() => toast.remove(), 300);
+    }, 2000);
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    updateFontPreview();
+    
+    // Check if we need to show step 2
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('step') === '2') {
+        goToStep(2);
+    }
+    
+    // Radio button styling
+    document.querySelectorAll('input[name="request_type"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            document.querySelectorAll('input[name="request_type"]').forEach(r => {
+                r.closest('label').classList.remove('border-primary', 'bg-primary/5');
+                r.closest('label').classList.add('border-gray-200');
+            });
+            if (this.checked) {
+                this.closest('label').classList.add('border-primary', 'bg-primary/5');
+                this.closest('label').classList.remove('border-gray-200');
+            }
+        });
+    });
+});
 </script>
 
 <?php require_once '../includes/footer.php'; ?>

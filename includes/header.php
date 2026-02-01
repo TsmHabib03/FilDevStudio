@@ -292,6 +292,71 @@ if (strpos($_SERVER['PHP_SELF'], '/admin/') !== false ||
                         <?php endif; ?>
                         
                         <div class="flex items-center space-x-3 ml-4 pl-4 border-l border-gray-200">
+                            <?php if ($isAdmin): 
+                                // Get unread notification count for admin
+                                require_once __DIR__ . '/mail.php';
+                                $pdo = getConnection();
+                                $unreadCount = getUnreadNotificationCount($pdo);
+                            ?>
+                            <!-- Admin Notification Bell -->
+                            <div class="relative" id="notificationDropdown">
+                                <button onclick="toggleNotifications()" class="relative p-2 text-gray-600 hover:text-primary-600 hover:bg-gray-100 rounded-lg transition-colors duration-200">
+                                    <i class="fas fa-bell text-lg"></i>
+                                    <?php if ($unreadCount > 0): ?>
+                                    <span class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold animate-pulse">
+                                        <?php echo $unreadCount > 9 ? '9+' : $unreadCount; ?>
+                                    </span>
+                                    <?php endif; ?>
+                                </button>
+                                
+                                <!-- Notifications Dropdown -->
+                                <div id="notificationsPanel" class="hidden absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-100 z-50">
+                                    <div class="p-4 border-b border-gray-100 flex justify-between items-center">
+                                        <h3 class="font-semibold text-gray-800">Notifications</h3>
+                                        <?php if ($unreadCount > 0): ?>
+                                        <span class="text-xs bg-red-100 text-red-600 px-2 py-1 rounded-full"><?php echo $unreadCount; ?> new</span>
+                                        <?php endif; ?>
+                                    </div>
+                                    <div class="max-h-80 overflow-y-auto" id="notificationsList">
+                                        <?php 
+                                        $notifications = getAdminNotifications($pdo, 5);
+                                        if (empty($notifications)): ?>
+                                        <div class="p-6 text-center text-gray-500">
+                                            <i class="fas fa-bell-slash text-2xl mb-2"></i>
+                                            <p class="text-sm">No notifications yet</p>
+                                        </div>
+                                        <?php else: 
+                                            foreach ($notifications as $notif): 
+                                                $isUnread = !$notif['is_read'] || $notif['is_read'] == 0;
+                                        ?>
+                                        <a href="<?php echo $basePath . 'admin/' . htmlspecialchars($notif['link_url'] ?? 'requests.php'); ?>" 
+                                           onclick="markAsRead(<?php echo $notif['id']; ?>)"
+                                           class="block p-4 hover:bg-gray-50 border-b border-gray-50 <?php echo $isUnread ? 'bg-blue-50/50' : ''; ?>">
+                                            <div class="flex items-start gap-3">
+                                                <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 
+                                                    <?php echo $notif['type'] === 'new_request' ? 'bg-purple-100 text-purple-600' : 'bg-blue-100 text-blue-600'; ?>">
+                                                    <i class="fas <?php echo $notif['type'] === 'new_request' ? 'fa-palette' : 'fa-info'; ?> text-sm"></i>
+                                                </div>
+                                                <div class="flex-1 min-w-0">
+                                                    <p class="font-medium text-gray-800 text-sm truncate"><?php echo htmlspecialchars($notif['title']); ?></p>
+                                                    <p class="text-xs text-gray-500 truncate"><?php echo htmlspecialchars($notif['message']); ?></p>
+                                                    <p class="text-xs text-gray-400 mt-1"><?php echo date('M j, g:i A', strtotime($notif['created_at'])); ?></p>
+                                                </div>
+                                                <?php if ($isUnread): ?>
+                                                <div class="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-2"></div>
+                                                <?php endif; ?>
+                                            </div>
+                                        </a>
+                                        <?php endforeach; 
+                                        endif; ?>
+                                    </div>
+                                    <a href="<?php echo $basePath; ?>admin/requests.php" class="block p-3 text-center text-primary-600 hover:bg-gray-50 font-medium text-sm border-t border-gray-100 rounded-b-xl">
+                                        View All Requests
+                                    </a>
+                                </div>
+                            </div>
+                            <?php endif; ?>
+                            
                             <div class="flex items-center space-x-2">
                                 <div class="w-9 h-9 gradient-bg rounded-full flex items-center justify-center shadow-soft">
                                     <span class="text-white font-semibold text-sm"><?php echo strtoupper(substr($userName, 0, 1)); ?></span>

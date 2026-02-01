@@ -150,6 +150,34 @@
                 }
             });
         }
+        
+        // Admin Notification Bell Toggle
+        function toggleNotifications() {
+            const panel = document.getElementById('notificationsPanel');
+            if (panel) {
+                panel.classList.toggle('hidden');
+            }
+        }
+        
+        // Close notifications when clicking outside
+        document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('notificationDropdown');
+            const panel = document.getElementById('notificationsPanel');
+            if (dropdown && panel && !dropdown.contains(event.target)) {
+                panel.classList.add('hidden');
+            }
+        });
+        
+        // Mark notification as read (AJAX call)
+        function markAsRead(notificationId) {
+            fetch('<?php echo $basePath ?? ''; ?>admin/ajax/mark-notification-read.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'notification_id=' + notificationId
+            }).catch(err => console.log('Mark read error:', err));
+        }
 
         // Smooth scroll for anchor links
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
